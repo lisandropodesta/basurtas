@@ -1,0 +1,86 @@
+﻿@page "/basas/{uid}"
+@using Basurtas.Model;
+@using CardGames;
+@using CardGames.Basas;
+@inherits GamePage
+@inject IJSRuntime jsRuntime
+
+<h1>Basurtas</h1>
+<h2>Codigo @Uid</h2>
+
+@if (@IsCreator)
+{
+    <button class="btn btn-primary" @onclick="Start">Iniciar juego!</button>
+}
+
+<p>
+    Enter your name:
+    <input type="text" @bind="PlayerNickName" /><br />
+</p>
+
+<h3>Cantidad de jugadores: @PlayersNumber (@PlayersListText)</h3>
+
+@code {
+
+    [Parameter]
+    public string Uid { get; set; }
+
+    public int PlayersNumber => game?.PlayersNumber ?? 0;
+
+    public string PlayersListText => game?.PlayersListText;
+
+    public bool IsCreator { get; private set; }
+
+    public string PlayerNickName { get => player.NickName; set => player.NickName = value; }
+
+    private static readonly Dictionary<string, BasasGame> cache = new Dictionary<string, BasasGame>();
+
+    private Player player;
+
+    private BasasGame game;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        player = new Player();
+
+        if (!cache.TryGetValue(Uid, out game))
+        {
+            game = new BasasGame();
+            cache.Add(Uid, game);
+            IsCreator = true;
+        }
+
+        game.AddPlayer(player);
+        game.OnStateChanged += OnGameStateChanged;
+    }
+
+    protected override void DoCloseAll()
+    {
+        if (game != null)
+        {
+            game.OnStateChanged -= OnGameStateChanged;
+            game.RemovePlayer(player);
+        }
+
+        base.DoCloseAll();
+    }
+
+    public void Start()
+    {
+        try
+        {
+            game.Start();
+        }
+        catch (Exception x)
+        {
+            jsRuntime.InvokeAsync<object>("ShowAlert", x.Message);
+        }
+    }
+
+    private void OnGameStateChanged(object sender, EventArgs e)
+    {
+        InvokeAsync(() => StateHasChanged());
+    }
+}
