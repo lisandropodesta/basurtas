@@ -15,6 +15,11 @@ namespace CardGames
         public GameStatus Status { get; private set; }
 
         /// <summary>
+        /// Players.
+        /// </summary>
+        public IReadOnlyList<Player> Players => players;
+
+        /// <summary>
         /// Players number.
         /// </summary>
         public int PlayersNumber => players.Count;
@@ -48,6 +53,10 @@ namespace CardGames
             {
                 throw new Exception(text);
             }
+
+            Status = GameStatus.Started;
+
+            GameStarted();
         }
 
         /// <summary>

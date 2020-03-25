@@ -20,6 +20,36 @@
 
 <h3>Cantidad de jugadores: @PlayersNumber (@PlayersListText)</h3>
 
+@if (ShowScoreboard)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                @foreach (var p in game.Players)
+                {
+                    <th>
+                        @p.NickName
+                    </th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var r in game.Scoreboard.Rounds)
+            {
+                <tr>
+                    @for (var i = 0; i < game.Players.Count; i++)
+                    {
+                        <td>
+                            @r.Player[i].Asked / @r.Player[i].Score
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
 @code {
 
     [Parameter]
@@ -32,6 +62,8 @@
     public bool IsCreator { get; private set; }
 
     public string PlayerNickName { get => player.NickName; set => player.NickName = value; }
+
+    public bool ShowScoreboard => game?.Status == GameStatus.Started || game?.Status == GameStatus.Finished;
 
     private static readonly Dictionary<string, BasasGame> cache = new Dictionary<string, BasasGame>();
 
@@ -72,6 +104,7 @@
         try
         {
             game.Start();
+            StateHasChanged();
         }
         catch (Exception x)
         {

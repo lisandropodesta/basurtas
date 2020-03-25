@@ -1,10 +1,4 @@
-﻿using CardGames;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace CardGames.Basas
+﻿namespace CardGames.Basas
 {
     /// <summary>
     /// Game of Basas.
@@ -25,14 +19,14 @@ namespace CardGames.Basas
         private readonly Deck<EnglishCardSuit, EnglishCardRank> deck = new Deck<EnglishCardSuit, EnglishCardRank>();
 
         // Scoreboard.
-        private BasasScoreboard scoreboard;
+        public BasasScoreboard Scoreboard { get; private set; }
 
         /// <summary>
         /// Game started.
         /// </summary>
         protected override void GameStarted()
         {
-            scoreboard = new BasasScoreboard(PlayersNumber);
+            Scoreboard = new BasasScoreboard(PlayersNumber);
         }
     }
 }
