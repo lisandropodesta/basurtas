@@ -2,7 +2,7 @@
 {
     public class BasasScoreboardRoundPlayer
     {
-        public byte? Asked { get; set; }
+        public byte? Bid { get; set; }
 
         public byte? Basas { get; set; }
 

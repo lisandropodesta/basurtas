@@ -5,7 +5,7 @@
         /// <summary>
         /// Total number of rounds.
         /// </summary>
-        public const int Rounds = 14;
+        public const int RoundsNumber = 14;
 
         /// <summary>
         /// Number of cards per each player in each round.

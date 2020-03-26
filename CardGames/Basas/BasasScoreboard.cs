@@ -14,9 +14,9 @@ namespace CardGames.Basas
         {
             this.playersCount = (byte)playersCount;
 
-            Rounds = new BasasScoreboardRound[BasasConsts.Rounds];
+            Rounds = new BasasScoreboardRound[BasasConsts.RoundsNumber];
 
-            for (var round = 0; round < BasasConsts.Rounds; round++)
+            for (var round = 0; round < BasasConsts.RoundsNumber; round++)
             {
                 Rounds[round] = new BasasScoreboardRound(playersCount);
             }
@@ -36,22 +36,30 @@ namespace CardGames.Basas
         }
 
         /// <summary>
+        /// Get the total bid of the current round.
+        /// </summary>
+        public int GetRoundBid()
+        {
+            return Rounds[currRound].GetTotalBid();
+        }
+
+        /// <summary>
         /// Stored quantity asked for the player.
         /// </summary>
-        public void PlayerAsks(byte playerIndex, byte quantity)
+        public void SetPlayerBid(byte playerIndex, byte quantity)
         {
             if (playerIndex >= playersCount)
             {
                 throw new ArgumentException("Invalid player");
             }
 
-            Rounds[currRound].Player[playerIndex].Asked = quantity;
+            Rounds[currRound].Player[playerIndex].Bid = quantity;
         }
 
         /// <summary>
         /// Stored quantity made for the player.
         /// </summary>
-        public void PlayerMakes(byte playerIndex, byte quantity)
+        public void SetPlayerBasas(byte playerIndex, byte quantity)
         {
             if (playerIndex >= playersCount)
             {
@@ -60,7 +68,7 @@ namespace CardGames.Basas
 
             Rounds[currRound].Player[playerIndex].Basas = quantity;
             var prev = currRound >= 2 ? Rounds[currRound - 1].Player[playerIndex].Basas : (byte)0;
-            Rounds[currRound].Player[playerIndex].Score = (byte)(prev + quantity + (Rounds[currRound].Player[playerIndex].Asked == quantity ? 10 : 0));
+            Rounds[currRound].Player[playerIndex].Score = (byte)(prev + quantity + (Rounds[currRound].Player[playerIndex].Bid == quantity ? 10 : 0));
         }
     }
 }

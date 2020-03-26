@@ -7,13 +7,6 @@ namespace CardGames
 {
     public abstract class CardGame
     {
-        private readonly List<Player> players = new List<Player>();
-
-        /// <summary>
-        /// Game status.
-        /// </summary>
-        public GameStatus Status { get; private set; }
-
         /// <summary>
         /// Players.
         /// </summary>
@@ -44,6 +37,11 @@ namespace CardGames
         /// </summary>
         public event EventHandler OnStateChanged;
 
+        // Players list.
+        private readonly List<Player> players = new List<Player>();
+
+        private bool started;
+
         /// <summary>
         /// Starts the game.
         /// </summary>
@@ -54,9 +52,8 @@ namespace CardGames
                 throw new Exception(text);
             }
 
-            Status = GameStatus.Started;
-
-            GameStarted();
+            started = true;
+            StartGame();
         }
 
         /// <summary>
@@ -109,7 +106,7 @@ namespace CardGames
         /// <summary>
         /// Game started.
         /// </summary>
-        protected abstract void GameStarted();
+        protected abstract void StartGame();
 
         #endregion
 
@@ -118,9 +115,9 @@ namespace CardGames
         /// </summary>
         protected bool IsReadyToStart(out string text)
         {
-            if (Status != GameStatus.Building)
+            if (started)
             {
-                text = "El juego debe estar en construcción para poder empezar.";
+                text = "Este juego ya inició.";
                 return false;
             }
 
@@ -132,6 +129,11 @@ namespace CardGames
 
             text = string.Empty;
             return true;
+        }
+
+        protected void NotifyStateChanged()
+        {
+            DoStateChanged();
         }
 
         private void OnPlayerPropertyChanged(object sender, PropertyChangedEventArgs e)

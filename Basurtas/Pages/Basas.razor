@@ -8,24 +8,62 @@
 <h1>Basurtas</h1>
 <h2>Codigo @Uid</h2>
 
-@if (@IsCreator)
-{
-    <button class="btn btn-primary" @onclick="Start">Iniciar juego!</button>
-}
-
-<p>
-    Enter your name:
-    <input type="text" @bind="PlayerNickName" /><br />
-</p>
-
 <h3>Cantidad de jugadores: @PlayersNumber (@PlayersListText)</h3>
 
-@if (ShowScoreboard)
+@switch (Game?.State ?? BasasState.Build)
+{
+    case BasasState.Build:
+        <p>
+            Nombre:
+            <input type="text" @bind="PlayerNickName" /><br />
+        </p>
+
+        @if (@IsCreator)
+        {
+            <button class="btn btn-primary" @onclick="Start">Iniciar juego!</button>
+        }
+        break;
+
+    case BasasState.Bid:
+        if (Game.CurrentPlayer == player)
+        {
+            <p>
+                Cantidad de basas: <input type="text" @bind="CurrentBid" /><br />
+            </p>
+        }
+        else
+        {
+            <p>
+                Jugador pidiendo: @Game.CurrentPlayer.NickName
+            </p>
+        }
+        break;
+
+    case BasasState.Play:
+        if (Game.CurrentPlayer == player)
+        {
+            <p>
+                Es tu turno<br />
+            </p>
+        }
+        else
+        {
+            <p>
+                Turno de @Game.CurrentPlayer.NickName
+            </p>
+        }
+        break;
+
+    case BasasState.End:
+        break;
+}
+
+@if (Game?.State != BasasState.Build)
 {
     <table class="table">
         <thead>
             <tr>
-                @foreach (var p in game.Players)
+                @foreach (var p in Game.Players)
                 {
                     <th>
                         @p.NickName
@@ -35,13 +73,13 @@
         </thead>
 
         <tbody>
-            @foreach (var r in game.Scoreboard.Rounds)
+            @foreach (var r in Game.Scoreboard.Rounds)
             {
                 <tr>
-                    @for (var i = 0; i < game.Players.Count; i++)
+                    @for (var i = 0; i < Game.Players.Count; i++)
                     {
                         <td>
-                            @r.Player[i].Asked / @r.Player[i].Score
+                            @r.Player[i].Bid / @r.Player[i].Score
                         </td>
                     }
                 </tr>
@@ -55,15 +93,27 @@
     [Parameter]
     public string Uid { get; set; }
 
-    public int PlayersNumber => game?.PlayersNumber ?? 0;
+    public int PlayersNumber => Game?.PlayersNumber ?? 0;
 
-    public string PlayersListText => game?.PlayersListText;
+    public string PlayersListText => Game?.PlayersListText;
 
     public bool IsCreator { get; private set; }
 
     public string PlayerNickName { get => player.NickName; set => player.NickName = value; }
 
-    public bool ShowScoreboard => game?.Status == GameStatus.Started || game?.Status == GameStatus.Finished;
+    public BasasGame Game => game;
+
+    public int CurrentBid
+    {
+        get => currentBid;
+        set
+        {
+            currentBid = value;
+            SafeAction(() => game.SetPlayerBid(player, value));
+        }
+    }
+
+    public int currentBid;
 
     private static readonly Dictionary<string, BasasGame> cache = new Dictionary<string, BasasGame>();
 
@@ -90,10 +140,10 @@
 
     protected override void DoCloseAll()
     {
-        if (game != null)
+        if (Game != null)
         {
-            game.OnStateChanged -= OnGameStateChanged;
-            game.RemovePlayer(player);
+            Game.OnStateChanged -= OnGameStateChanged;
+            Game.RemovePlayer(player);
         }
 
         base.DoCloseAll();
@@ -101,10 +151,14 @@
 
     public void Start()
     {
+        SafeAction(Game.Start);
+    }
+
+    private void SafeAction(Action action)
+    {
         try
         {
-            game.Start();
-            StateHasChanged();
+            action();
         }
         catch (Exception x)
         {
