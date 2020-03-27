@@ -3,15 +3,15 @@
     public enum EnglishCardSuit
     {
         // Trébol
-        Clubs,
+        Club,
 
         // Diamantes
-        Diamonds,
+        Diamond,
 
         // Corazones
-        Heards,
+        Heart,
 
         // Picket
-        Spades
+        Spade
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace CardGames.Basas
@@ -37,11 +38,16 @@ namespace CardGames.Basas
         public Player CurrentPlayer { get; private set; }
 
         /// <summary>
+        /// Card representing the trinfo.
+        /// </summary>
+        public Card<EnglishCardSuit, EnglishCardRank> Triunfo { get; private set; }
+
+        /// <summary>
         /// Last player flag.
         /// </summary>
         protected bool IsLastPlayer => currFirstPlayer == GetNextPlayerIndex();
 
-        private Player[] playerPositions;
+        private List<Player> playerAtPosition;
 
         private byte currentRound;
 
@@ -49,12 +55,32 @@ namespace CardGames.Basas
 
         private byte currFirstPlayer;
 
+        // Current player cards.
+        private List<Card<EnglishCardSuit, EnglishCardRank>>[] playerCards;
+
         /// <summary>
         /// Constructor.
         /// </summary>
         public BasasGame()
         {
             State = BasasState.Build;
+        }
+
+        /// <summary>
+        /// Get current player cards.
+        /// </summary>
+        public List<Card<EnglishCardSuit, EnglishCardRank>> GetCards(Player player)
+        {
+            var index = GetPlayerIndex(player);
+            return index >= 0 ? playerCards[index] : null;
+        }
+
+        /// <summary>
+        /// Gets a card file name.
+        /// </summary>
+        public string GetCardFile(Card<EnglishCardSuit, EnglishCardRank> card)
+        {
+            return $"/Images/EnglishCards/{card.Suit.ToString().ToLower()}_{GetText(card.Rank)}.svg";
         }
 
         /// <summary>
@@ -91,7 +117,8 @@ namespace CardGames.Basas
         {
             Scoreboard = new BasasScoreboard(PlayersNumber);
 
-            playerPositions = Players.ToArray();
+            playerAtPosition = Players.ToArray().ToList();
+
             // TODO: mix players
 
             currentRound = 0;
@@ -103,16 +130,30 @@ namespace CardGames.Basas
         }
 
         /// <summary>
+        /// Check if the player is allowed to enter.
+        /// </summary>
+        protected override bool IsAllowedToEnter(Player player, out string reason)
+        {
+            if (State != BasasState.Build)
+            {
+                reason = "El juego ya comenzó";
+                return false;
+            }
+
+            return base.IsAllowedToEnter(player, out reason);
+        }
+
+        /// <summary>
         /// Go to next game step.
         /// </summary>
         private void NextStep(bool skip)
         {
             if (skip)
             {
-                currPlayerIndex = (byte)((currPlayerIndex + 1) % PlayersNumber);
+                currPlayerIndex = GetNextPlayerIndex();
             }
 
-            CurrentPlayer = playerPositions[currPlayerIndex];
+            CurrentPlayer = playerAtPosition[currPlayerIndex];
 
             if (currPlayerIndex == currFirstPlayer)
             {
@@ -146,21 +187,123 @@ namespace CardGames.Basas
         }
 
         /// <summary>
-        /// Get the next player of the round.
-        /// </summary>
-        private byte GetNextPlayerIndex()
-        {
-            return (byte)((currPlayerIndex + 1) % PlayersNumber);
-        }
-
-        /// <summary>
         /// Start biding in the next round.
         /// </summary>
         private void StartNextRound()
         {
             currentRound++;
+            DealCards();
             State = BasasState.Bid;
             Scoreboard.RoundBegins(currentRound);
+        }
+
+        /// <summary>
+        /// Deal all round cards.
+        /// </summary>
+        private void DealCards()
+        {
+            var mixedDeck = deck.StartDealingCards();
+
+            playerCards = new List<Card<EnglishCardSuit, EnglishCardRank>>[PlayersNumber];
+
+            for (var pi = 0; pi < PlayersNumber; pi++)
+            {
+                var cardsPerPlayer = BasasConsts.RoundCards[currentRound - 1];
+                for (var ri = 0; ri < cardsPerPlayer; ri++)
+                {
+                    var card = mixedDeck.GetNextCard();
+                    var playerIndex = GetPlayerIndex(pi + currFirstPlayer);
+
+                    if (ri == 0)
+                    {
+                        playerCards[playerIndex] = new List<Card<EnglishCardSuit, EnglishCardRank>>();
+                    }
+
+                    playerCards[playerIndex].Add(card);
+                }
+            }
+
+            Triunfo = mixedDeck.GetNextCard();
+        }
+
+        /// <summary>
+        /// Get a player.
+        /// </summary>
+        private Player GetPlayer(int index)
+        {
+            return playerAtPosition[GetPlayerIndex(index)];
+        }
+
+        /// <summary>
+        /// Get the next player of the round.
+        /// </summary>
+        private byte GetNextPlayerIndex()
+        {
+            return GetPlayerIndex(currPlayerIndex + 1);
+        }
+
+        /// <summary>
+        /// Get a player index.
+        /// </summary>
+        private byte GetPlayerIndex(int index)
+        {
+            return (byte)(index % PlayersNumber);
+        }
+
+        /// <summary>
+        /// Get a player index.
+        /// </summary>
+        private byte GetPlayerIndex(Player player)
+        {
+            return (byte)playerAtPosition.IndexOf(player);
+        }
+
+        private static string GetText(EnglishCardRank rank)
+        {
+            switch (rank)
+            {
+                case EnglishCardRank.Two:
+                    return "2";
+
+                case EnglishCardRank.Three:
+                    return "3";
+
+                case EnglishCardRank.Four:
+                    return "4";
+
+                case EnglishCardRank.Five:
+                    return "5";
+
+                case EnglishCardRank.Six:
+                    return "6";
+
+                case EnglishCardRank.Seven:
+                    return "7";
+
+                case EnglishCardRank.Eight:
+                    return "8";
+
+                case EnglishCardRank.Nine:
+                    return "9";
+
+                case EnglishCardRank.Ten:
+                    return "10";
+
+                case EnglishCardRank.Jack:
+                    return "J";
+
+                case EnglishCardRank.Queen:
+                    return "Q";
+
+                case EnglishCardRank.King:
+                    return "K";
+
+                case EnglishCardRank.Ace:
+                    return "A";
+
+                default:
+                    return null;
+            }
         }
     }
 }

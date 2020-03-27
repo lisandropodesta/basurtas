@@ -25,6 +25,16 @@
         break;
 
     case BasasState.Bid:
+        <img src=@Game.GetCardFile(Game.Triunfo) />
+
+        if (Cards != null)
+        {
+            foreach (var card in Cards)
+            {
+                <img src=@Game.GetCardFile(card) />
+            }
+        }
+
         if (Game.CurrentPlayer == player)
         {
             <p>
@@ -103,6 +113,8 @@
 
     public BasasGame Game => game;
 
+    public List<Card<EnglishCardSuit, EnglishCardRank>> Cards { get; private set; }
+
     public int CurrentBid
     {
         get => currentBid;
@@ -134,8 +146,11 @@
             IsCreator = true;
         }
 
-        game.AddPlayer(player);
-        game.OnStateChanged += OnGameStateChanged;
+        SafeAction(() =>
+        {
+            game.AddPlayer(player);
+            game.OnStateChanged += OnGameStateChanged;
+        });
     }
 
     protected override void DoCloseAll()
@@ -168,6 +183,13 @@
 
     private void OnGameStateChanged(object sender, EventArgs e)
     {
+        switch (Game.State)
+        {
+            case BasasState.Bid:
+                Cards = Game.GetCards(player);
+                break;
+        }
+
         InvokeAsync(() => StateHasChanged());
     }
 }

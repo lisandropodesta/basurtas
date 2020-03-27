@@ -63,11 +63,15 @@ namespace CardGames
         {
             if (!players.Contains(player))
             {
-                if (IsAllowedToEnter(player))
+                if (IsAllowedToEnter(player, out string reason))
                 {
                     player.PropertyChanged += OnPlayerPropertyChanged;
                     players.Add(player);
                     DoPlayersListChanged();
+                }
+                else
+                {
+                    throw new Exception(reason);
                 }
             }
         }
@@ -98,9 +102,16 @@ namespace CardGames
         /// <summary>
         /// Check if the player is allowed to enter.
         /// </summary>
-        protected virtual bool IsAllowedToEnter(Player player)
+        protected virtual bool IsAllowedToEnter(Player player, out string reason)
         {
-            return PlayersNumber < MaxPlayersNumber;
+            if (PlayersNumber >= MaxPlayersNumber)
+            {
+                reason = "Máxima cantidad de jugadores alcanzada";
+                return false;
+            }
+
+            reason = string.Empty;
+            return true;
         }
 
         /// <summary>
