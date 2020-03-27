@@ -10,7 +10,8 @@
 
 <h3>Cantidad de jugadores: @PlayersNumber (@PlayersListText)</h3>
 
-@switch (Game?.State ?? BasasState.Build)
+<!-- Input name -->
+@switch (GameState)
 {
     case BasasState.Build:
         <p>
@@ -24,84 +25,111 @@
         }
         break;
 
+    case BasasState.HandFinished:
+        @if (@IsCreator)
+        {
+            <button class="btn btn-primary" @onclick="Continue">Continuar</button>
+        }
+        break;
+}
+
+<!-- Cards -->
+@switch (GameState)
+{
     case BasasState.Bid:
+    case BasasState.Play:
+    case BasasState.HandFinished:
+        <h3> Triunfo: </h3>
         <img src=@Game.GetCardFile(Game.Triunfo) />
 
-        if (Cards != null)
+        <h3> Cartas jugadas: </h3>
+        foreach (var card in Game.PlayedCards)
         {
-            foreach (var card in Cards)
+            if (card != null)
             {
                 <img src=@Game.GetCardFile(card) />
             }
         }
 
+        if (Cards != null)
+        {
+            <h3>Tus cartas:</h3>
+            foreach (var card in Cards)
+            {
+                <img src=@Game.GetCardFile(card) @onclick="@(()=> PlayCard(card))" />
+            }
+        }
+        break;
+}
+
+<hr />
+
+<!-- Bid/Play -->
+@switch (GameState)
+{
+    case BasasState.Bid:
         if (Game.CurrentPlayer == player)
         {
-            <p>
-                Cantidad de basas: <input type="text" @bind="CurrentBid" /><br />
-            </p>
+            <p>Cantidad de basas: <input type="text" @bind="CurrentBid" /><br /></p>
         }
         else
         {
-            <p>
-                Jugador pidiendo: @Game.CurrentPlayer.NickName
-            </p>
+            <p>Jugador pidiendo: @Game.CurrentPlayer.NickName</p>
         }
         break;
 
     case BasasState.Play:
         if (Game.CurrentPlayer == player)
         {
-            <p>
-                Es tu turno<br />
-            </p>
+            <p>Es tu turno<br /></p>
         }
         else
         {
-            <p>
-                Turno de @Game.CurrentPlayer.NickName
-            </p>
+            <p>Turno de @Game.CurrentPlayer.NickName</p>
         }
-        break;
-
-    case BasasState.End:
         break;
 }
 
-@if (Game?.State != BasasState.Build)
+<!-- Scoreboard -->
+@switch (GameState)
 {
-    <table class="table">
-        <thead>
-            <tr>
-                @foreach (var p in Game.Players)
-                {
-                    <th>
-                        @p.NickName
-                    </th>
-                }
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var r in Game.Scoreboard.Rounds)
-            {
+    case BasasState.Bid:
+    case BasasState.Play:
+    case BasasState.HandFinished:
+        <hr />
+        <table class="table">
+            <thead>
                 <tr>
-                    @for (var i = 0; i < Game.Players.Count; i++)
+                    @foreach (var p in Game.Players)
                     {
-                        <td>
-                            @r.Player[i].Bid / @r.Player[i].Score
-                        </td>
+                        <th>@p.NickName</th>
                     }
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+
+            <tbody>
+                @foreach (var r in Game.Scoreboard.Rounds)
+                {
+                    <tr>
+                        @for (var i = 0; i < Game.Players.Count; i++)
+                        {
+                            <td>@r.Player[i].Bid / @r.Player[i].Score</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        break;
 }
 
 @code {
 
     [Parameter]
     public string Uid { get; set; }
+
+    public BasasGame Game => game;
+
+    public BasasState GameState => Game?.State ?? BasasState.Build;
 
     public int PlayersNumber => Game?.PlayersNumber ?? 0;
 
@@ -110,8 +138,6 @@
     public bool IsCreator { get; private set; }
 
     public string PlayerNickName { get => player.NickName; set => player.NickName = value; }
-
-    public BasasGame Game => game;
 
     public List<Card<EnglishCardSuit, EnglishCardRank>> Cards { get; private set; }
 
@@ -153,6 +179,21 @@
         });
     }
 
+    public void Start()
+    {
+        SafeAction(Game.Start);
+    }
+
+    public void Continue()
+    {
+        SafeAction(Game.Continue);
+    }
+
+    public void PlayCard(Card<EnglishCardSuit, EnglishCardRank> card)
+    {
+        SafeAction(() => Game.PlayCard(player, card));
+    }
+
     protected override void DoCloseAll()
     {
         if (Game != null)
@@ -162,11 +203,6 @@
         }
 
         base.DoCloseAll();
-    }
-
-    public void Start()
-    {
-        SafeAction(Game.Start);
     }
 
     private void SafeAction(Action action)

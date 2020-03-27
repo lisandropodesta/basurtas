@@ -8,6 +8,8 @@
 
         Play,
 
-        End
+        HandFinished,
+
+        GameFinished
     }
 }

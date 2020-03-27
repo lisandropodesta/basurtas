@@ -74,7 +74,7 @@ namespace CardGames
                     throw new Exception("Mo more cards!");
                 }
 
-                return cards[currentIndex++];
+                return cards[position[currentIndex++]];
             }
         }
 
