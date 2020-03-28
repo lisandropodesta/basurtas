@@ -6,14 +6,14 @@
 @inject IJSRuntime jsRuntime
 
 <h1>Basurtas</h1>
-<h2>Codigo @Uid</h2>
-
-<h3>Cantidad de jugadores: @PlayersNumber (@PlayersListText)</h3>
 
 <!-- Input name -->
 @switch (GameState)
 {
     case BasasState.Build:
+        <hr />
+        <h3>Cantidad de jugadores: @PlayersListText (@PlayersNumber)</h3>
+
         <p>
             Nombre:
             <input type="text" @bind="PlayerNickName" /><br />
@@ -39,20 +39,36 @@
     case BasasState.Bid:
     case BasasState.Play:
     case BasasState.HandFinished:
-        <h3> Triunfo: </h3>
-        <img src=@Game.GetCardFile(Game.Triunfo) />
+        <hr />
+        <table>
+            <tr>
+                <td><h3> Triunfo</h3></td>
+                @if (Game.HandPlayers != null)
+                {
+                    foreach (var player in Game.HandPlayers)
+                    {
+                        <td><h3>@player?.NickName</h3></td>
+                    }
+                }
+            </tr>
+            <tr>
+                <td>
+                    <img src=@Game.GetCardFile(Game.Triunfo) />
+                </td>
 
-        <h3> Cartas jugadas: </h3>
-        foreach (var card in Game.PlayedCards)
-        {
-            if (card != null)
-            {
-                <img src=@Game.GetCardFile(card) />
-            }
-        }
+                @if (Game.HandCards != null)
+                {
+                    foreach (var card in Game.HandCards)
+                    {
+                        <td><img src=@Game.GetCardFile(card) /></td>
+                    }
+                }
+            </tr>
+        </table>
 
         if (Cards != null)
         {
+            <hr />
             <h3>Tus cartas:</h3>
             foreach (var card in Cards)
             {
@@ -68,24 +84,31 @@
 @switch (GameState)
 {
     case BasasState.Bid:
-        if (Game.CurrentPlayer == player)
+        if (Game.CurrPlayer == player)
         {
-            <p>Cantidad de basas: <input type="text" @bind="CurrentBid" /><br /></p>
+            for (byte bid = 0; bid <= Game.CurrRoundCards; bid++)
+            {
+                if (Game.IsValidBid(player, bid))
+                {
+                    byte bc = bid;
+                    <button class="btn btn-primary" @onclick="@(() => PlaceBid(bc))">Pedir @bid</button>
+                }
+            }
         }
         else
         {
-            <p>Jugador pidiendo: @Game.CurrentPlayer.NickName</p>
+            <p>Jugador pidiendo: @Game.CurrPlayer?.NickName</p>
         }
         break;
 
     case BasasState.Play:
-        if (Game.CurrentPlayer == player)
+        if (Game.CurrPlayer == player)
         {
-            <p>Es tu turno<br /></p>
+            <h3>Es tu turno<br /></h3>
         }
         else
         {
-            <p>Turno de @Game.CurrentPlayer.NickName</p>
+            <h4>Turno de @Game.CurrPlayer.NickName</h4>
         }
         break;
 }
@@ -97,23 +120,27 @@
     case BasasState.Play:
     case BasasState.HandFinished:
         <hr />
-        <table class="table">
+        <table class="table table-striped">
             <thead>
                 <tr>
+                    <th scope="col"></th>
                     @foreach (var p in Game.Players)
                     {
-                        <th>@p.NickName</th>
+                        <th scope="col">@p.NickName</th>
                     }
                 </tr>
             </thead>
 
             <tbody>
-                @foreach (var r in Game.Scoreboard.Rounds)
+                @for (var index = 0; index < Game.Scoreboard.Rounds.Length; index++)
                 {
+                    var r = Game.Scoreboard.Rounds[index];
                     <tr>
+                        <td scope="col">@BasasConsts.RoundCards[index]</td>
+
                         @for (var i = 0; i < Game.Players.Count; i++)
                         {
-                            <td>@r.Player[i].Bid / @r.Player[i].Score</td>
+                            <td>@r.Player[i].Bid / @r.Player[i].Basas / @r.Player[i].Score</td>
                         }
                     </tr>
                 }
@@ -139,7 +166,7 @@
 
     public string PlayerNickName { get => player.NickName; set => player.NickName = value; }
 
-    public List<Card<EnglishCardSuit, EnglishCardRank>> Cards { get; private set; }
+    public List<EnglishCard> Cards { get; private set; }
 
     public int CurrentBid
     {
@@ -147,7 +174,7 @@
         set
         {
             currentBid = value;
-            SafeAction(() => game.SetPlayerBid(player, value));
+            SafeAction(() => game.PlaceBid(player, value));
         }
     }
 
@@ -174,8 +201,8 @@
 
         SafeAction(() =>
         {
-            game.AddPlayer(player);
             game.OnStateChanged += OnGameStateChanged;
+            game.AddPlayer(player);
         });
     }
 
@@ -189,9 +216,14 @@
         SafeAction(Game.Continue);
     }
 
-    public void PlayCard(Card<EnglishCardSuit, EnglishCardRank> card)
+    public void PlayCard(EnglishCard card)
     {
         SafeAction(() => Game.PlayCard(player, card));
+    }
+
+    public void PlaceBid(byte bid)
+    {
+        SafeAction(() => game.PlaceBid(player, bid));
     }
 
     protected override void DoCloseAll()

@@ -3,7 +3,7 @@
     /// <summary>
     /// Card.
     /// </summary>
-    public class Card<TS, TR>
+    public abstract class Card<TS, TR>
     {
         /// <summary>
         /// Suit.
@@ -19,5 +19,15 @@
         {
             return string.Format($"{Rank} of {Suit}");
         }
+
+        /// <summary>
+        /// Get the suit text.
+        /// </summary>
+        public abstract string GetSuitText();
+
+        /// <summary>
+        /// Get the rank text.
+        /// </summary>
+        public abstract string GetRankText();
     }
 }

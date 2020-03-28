@@ -4,17 +4,17 @@ using System.Linq;
 
 namespace CardGames
 {
-    public interface IMixedDeck<TS, TR>
+    public interface IMixedDeck<T, TS, TR> where T : Card<TS, TR>
     {
-        Card<TS, TR> GetNextCard();
+        T GetNextCard();
     }
 
     /// <summary>
     /// Card deck.
     /// </summary>
-    public class Deck<TS, TR>
+    public class Deck<T, TS, TR> where T : Card<TS, TR>, new()
     {
-        private readonly List<Card<TS, TR>> cards = new List<Card<TS, TR>>();
+        private readonly List<T> cards = new List<T>();
 
         /// <summary>
         /// Constructor.
@@ -25,7 +25,7 @@ namespace CardGames
             {
                 foreach (var rank in Enum.GetValues(typeof(TR)))
                 {
-                    var card = new Card<TS, TR>
+                    var card = new T
                     {
                         Suit = (TS)suit,
                         Rank = (TR)rank
@@ -39,15 +39,15 @@ namespace CardGames
         /// <summary>
         /// Local class to support mixed cards dealing.
         /// </summary>
-        private class MixedDeck : IMixedDeck<TS, TR>
+        private class MixedDeck : IMixedDeck<T, TS, TR>
         {
             private int currentIndex;
 
-            private readonly List<Card<TS, TR>> cards;
+            private readonly List<T> cards;
 
             private readonly int[] position;
 
-            public MixedDeck(List<Card<TS, TR>> cards)
+            public MixedDeck(List<T> cards)
             {
                 this.cards = cards;
                 position = Enumerable.Range(0, cards.Count).ToArray();
@@ -67,7 +67,7 @@ namespace CardGames
                 }
             }
 
-            public Card<TS, TR> GetNextCard()
+            public T GetNextCard()
             {
                 if (currentIndex >= position.Length)
                 {
@@ -81,7 +81,7 @@ namespace CardGames
         /// <summary>
         /// Creates a mixed cards deck.
         /// </summary>
-        public IMixedDeck<TS, TR> StartDealingCards()
+        public IMixedDeck<T, TS, TR> StartDealingCards()
         {
             return new MixedDeck(cards);
         }

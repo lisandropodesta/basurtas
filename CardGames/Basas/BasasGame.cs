@@ -20,7 +20,7 @@ namespace CardGames.Basas
         public override int MaxPlayersNumber => 7;
 
         // Deck of cards.
-        private readonly Deck<EnglishCardSuit, EnglishCardRank> deck = new Deck<EnglishCardSuit, EnglishCardRank>();
+        private readonly Deck<EnglishCard, EnglishCardSuit, EnglishCardRank> deck = new Deck<EnglishCard, EnglishCardSuit, EnglishCardRank>();
 
         /// <summary>
         /// General state.
@@ -35,35 +35,45 @@ namespace CardGames.Basas
         /// <summary>
         /// Current player.
         /// </summary>
-        public Player CurrentPlayer => playerAtPosition?[currPlayerIndex];
+        public Player CurrPlayer => HandPlayers[handPlayerIndex];
+
+        /// <summary>
+        /// Number of cards in current round.
+        /// </summary>
+        public byte CurrRoundCards { get; private set; }
 
         /// <summary>
         /// Card representing the trinfo.
         /// </summary>
-        public Card<EnglishCardSuit, EnglishCardRank> Triunfo { get; private set; }
+        public EnglishCard Triunfo { get; private set; }
+
+        /// <summary>
+        /// Get the round players.
+        /// </summary>
+        public Player[] HandPlayers { get; private set; }
 
         /// <summary>
         /// Played cards on this hand on the current round.
         /// </summary>
-        public Card<EnglishCardSuit, EnglishCardRank>[] PlayedCards { get; private set; }
+        public EnglishCard[] HandCards { get; private set; }
 
         /// <summary>
         /// Last player flag.
         /// </summary>
-        protected bool IsLastPlayer => currFirstPlayer == GetNextPlayerIndex();
+        protected bool IsLastPlayer => handPlayerIndex == PlayersNumber - 1;
 
-        private List<Player> playerAtPosition;
-
-        private byte currentRound;
+        // Round index, from 0 to 13
+        private byte currRound;
 
         private byte leftHandsToPlay;
 
         private byte currFirstPlayer;
 
-        private byte currPlayerIndex;
+        // Hand player index, from 0 to number of players - 1
+        private byte handPlayerIndex;
 
-        // Current player cards.
-        private List<Card<EnglishCardSuit, EnglishCardRank>>[] playerCards;
+        // Players status in sequence of playing rounds.
+        private BasasPlayerStatus[] playerStatus;
 
         /// <summary>
         /// Constructor.
@@ -78,91 +88,16 @@ namespace CardGames.Basas
         /// </summary>
         protected override void StartGame()
         {
+            currRound = 0;
+
             Scoreboard = new BasasScoreboard(PlayersNumber);
 
-            playerAtPosition = Players.ToArray().ToList();
-            // TODO: mix players
+            playerStatus = new BasasPlayerStatus[PlayersNumber];
+            HandPlayers = new Player[PlayersNumber];
+            HandCards = new EnglishCard[PlayersNumber];
 
-            PlayedCards = new Card<EnglishCardSuit, EnglishCardRank>[PlayersNumber];
-
-            currentRound = 0;
-            currFirstPlayer = 0;
-            currPlayerIndex = 0;
-
-            NextStep(false);
-        }
-
-        /// <summary>
-        /// Get current player cards.
-        /// </summary>
-        public List<Card<EnglishCardSuit, EnglishCardRank>> GetCards(Player player)
-        {
-            var index = GetPlayerIndex(player);
-            return index >= 0 ? playerCards[index] : null;
-        }
-
-        /// <summary>
-        /// Gets a card file name.
-        /// </summary>
-        public string GetCardFile(Card<EnglishCardSuit, EnglishCardRank> card)
-        {
-            return $"/Images/EnglishCards/{card.Suit.ToString().ToLower()}_{GetText(card.Rank)}.svg";
-        }
-
-        /// <summary>
-        /// Set a player bid for the current round.
-        /// </summary>
-        public void SetPlayerBid(Player player, int bid)
-        {
-            if (player == CurrentPlayer)
-            {
-                var currRoundCards = BasasConsts.RoundCards[currentRound];
-
-                var validBid = bid <= currRoundCards;
-
-                if (validBid && IsLastPlayer)
-                {
-                    var count = Scoreboard.GetRoundBid() + bid;
-                    validBid = count != currRoundCards;
-                }
-
-                if (!validBid)
-                {
-                    throw new Exception(string.Format("No podés pedir {0}.", bid));
-                }
-
-                Scoreboard.SetPlayerBid(currPlayerIndex, (byte)bid);
-                NextStep(true);
-            }
-        }
-
-        /// <summary>
-        /// Plays a card.
-        /// </summary>
-        public void PlayCard(Player player, Card<EnglishCardSuit, EnglishCardRank> card)
-        {
-            if (State == BasasState.Play)
-            {
-                var index = GetPlayerIndex(player);
-
-                if (currPlayerIndex == index && playerCards[index].Contains(card))
-                {
-                    PlayedCards[index] = card;
-                    playerCards[index].Remove(card);
-                    NextStep(true);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Continues paused game.
-        /// </summary>
-        public void Continue()
-        {
-            if (State == BasasState.HandFinished)
-            {
-                NextStep(false);
-            }
+            CreatePlayersList();
+            NextStep();
         }
 
         /// <summary>
@@ -180,41 +115,187 @@ namespace CardGames.Basas
         }
 
         /// <summary>
-        /// Go to next step of the game.
+        /// Create the list of players.
         /// </summary>
-        private void NextStep(bool skip)
+        private void CreatePlayersList()
         {
-            if (skip)
+            var list = Players.ToArray().ToList();
+
+            // TODO: mix players
+
+            for (byte column = 0; column < list.Count; column++)
             {
-                currPlayerIndex = GetNextPlayerIndex();
+                playerStatus[column] = new BasasPlayerStatus(column, list[column]);
             }
+        }
 
-            if (currPlayerIndex == currFirstPlayer)
+        /// <summary>
+        /// Get current player cards.
+        /// </summary>
+        public List<EnglishCard> GetCards(Player player)
+        {
+            return GetPlayerStatus(player, out BasasPlayerStatus status) ? status.Cards : null;
+        }
+
+        /// <summary>
+        /// Gets a card file name.
+        /// </summary>
+        public string GetCardFile(EnglishCard card)
+        {
+            return card != null ? $"/Images/EnglishCards/{card.GetSuitText()}_{card.GetRankText()}.svg" :
+                $"/Images/EnglishCards/reverse.svg";
+        }
+
+        /// <summary>
+        /// Set a player bid for the current round.
+        /// </summary>
+        public void PlaceBid(Player player, int bid)
+        {
+            if (GetPlayerStatus(player, out BasasPlayerStatus status))
             {
-                switch (State)
+                if (!IsValidBid(player, bid))
                 {
-                    case BasasState.Build:
-                        StartRound();
-                        break;
+                    throw new Exception(string.Format("No podés pedir {0}.", bid));
+                }
 
-                    case BasasState.Bid:
-                        State = BasasState.Play;
-                        break;
+                Scoreboard.SetPlayerBid(status.Column, (byte)bid);
+                NextStep();
+            }
+        }
 
-                    case BasasState.Play:
-                        FinishHand();
-                        break;
+        /// <summary>
+        /// Check whether a bid is valid or not.
+        /// </summary>
+        public bool IsValidBid(Player player, int bid)
+        {
+            var validBid = false;
 
-                    case BasasState.HandFinished:
-                        ContinueAfterFinishingHand();
-                        break;
+            if (State == BasasState.Bid && player == CurrPlayer)
+            {
+                validBid = bid <= CurrRoundCards;
 
-                    default:
-                        throw new Exception("Fatal game error!");
+                if (validBid && IsLastPlayer)
+                {
+                    var count = Scoreboard.GetRoundBid() + bid;
+                    validBid = count != CurrRoundCards;
                 }
             }
 
+            return validBid;
+        }
+
+        /// <summary>
+        /// Plays a card.
+        /// </summary>
+        public void PlayCard(Player player, EnglishCard card)
+        {
+            if (State == BasasState.Play && player == CurrPlayer)
+            {
+                if (GetPlayerStatus(player, out BasasPlayerStatus status))
+                {
+                    if (!IsValidCard(status, card))
+                    {
+                        throw new Exception(string.Format("No podés jugar {0}.", card));
+                    }
+
+                    HandCards[handPlayerIndex] = card;
+                    status.Cards.Remove(card);
+                    NextStep();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Validates a card.
+        /// </summary>
+        private bool IsValidCard(BasasPlayerStatus status, EnglishCard card)
+        {
+            if (status.Cards.Contains(card))
+            {
+                if (handPlayerIndex > 0 && card.Suit != HandCards[0].Suit)
+                {
+                    return !status.Cards.Any(c => c.Suit == HandCards[0].Suit);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Continues paused game.
+        /// </summary>
+        public void Continue()
+        {
+            if (State == BasasState.HandFinished)
+            {
+                NextStep();
+            }
+        }
+
+        /// <summary>
+        /// Go to next step of the game.
+        /// </summary>
+        private void NextStep()
+        {
+            switch (State)
+            {
+                case BasasState.Build:
+                    StartRound();
+                    break;
+
+                case BasasState.Bid:
+                    if (!NextPlayer())
+                    {
+                        State = BasasState.Play;
+                    }
+                    break;
+
+                case BasasState.Play:
+                    if (!NextPlayer())
+                    {
+                        FinishHand();
+                    }
+                    break;
+
+                case BasasState.HandFinished:
+                    if (leftHandsToPlay > 0)
+                    {
+                        InitHand();
+                        State = BasasState.Play;
+                    }
+                    else if (currRound < BasasConsts.RoundsNumber)
+                    {
+                        currRound++;
+                        StartRound();
+                    }
+                    else
+                    {
+                        State = BasasState.GameFinished;
+                    }
+                    break;
+
+                default:
+                    throw new Exception("Fatal game error!");
+            }
+
             NotifyStateChanged();
+        }
+
+        /// <summary>
+        /// Go to next player.
+        /// </summary>
+        private bool NextPlayer()
+        {
+            if (handPlayerIndex + 1 < PlayersNumber)
+            {
+                handPlayerIndex++;
+                return true;
+            }
+
+            handPlayerIndex = 0;
+            return false;
         }
 
         /// <summary>
@@ -222,11 +303,12 @@ namespace CardGames.Basas
         /// </summary>
         private void StartRound()
         {
-            currFirstPlayer = currPlayerIndex = GetPlayerIndex(currentRound);
-            leftHandsToPlay = BasasConsts.RoundCards[currentRound];
+            currFirstPlayer = GetPlayerIndex(currRound);
+            leftHandsToPlay = CurrRoundCards = BasasConsts.RoundCards[currRound];
+            InitHand();
             DealCards();
             State = BasasState.Bid;
-            Scoreboard.RoundBegins(currentRound);
+            Scoreboard.RoundBegins(currRound);
         }
 
         /// <summary>
@@ -234,43 +316,13 @@ namespace CardGames.Basas
         /// </summary>
         private void FinishHand()
         {
-            State = BasasState.HandFinished;
-
             leftHandsToPlay--;
 
-            var playerIndex = CalcHandWinner();
-            Scoreboard.AddBasaToPlayer(playerIndex);
-            currFirstPlayer = currPlayerIndex = playerIndex;
-        }
+            var index = CalcHandWinner();
+            Scoreboard.AddBasaToPlayer(index);
+            currFirstPlayer = index;
 
-        /// <summary>
-        /// Continue after finishing a hand.
-        /// </summary>
-        private void ContinueAfterFinishingHand()
-        {
-            ResetPlayerCards();
-
-            if (leftHandsToPlay > 0)
-            {
-                State = BasasState.Play;
-            }
-            else if (currentRound < BasasConsts.RoundsNumber)
-            {
-                currentRound++;
-                StartRound();
-            }
-            else
-            {
-                State = BasasState.GameFinished;
-            }
-        }
-
-        private void ResetPlayerCards()
-        {
-            for (var i = 0; i < PlayersNumber; i++)
-            {
-                PlayedCards[i] = null;
-            }
+            State = BasasState.HandFinished;
         }
 
         /// <summary>
@@ -278,28 +330,27 @@ namespace CardGames.Basas
         /// </summary>
         private byte CalcHandWinner()
         {
-            byte winningPlayerIndex = 0;
-            Card<EnglishCardSuit, EnglishCardRank> winningCard = null;
+            byte winningIndex = 0;
+            EnglishCard winningCard = null;
 
-            for (var pi = 0; pi < PlayersNumber; pi++)
+            for (var index = 0; index < PlayersNumber; index++)
             {
-                var playerIndex = GetPlayerIndex(pi + currFirstPlayer);
-                var playerCard = PlayedCards[playerIndex];
+                var playerCard = HandCards[index];
 
-                if (pi == 0 || IsNewCardWinner(winningCard, playerCard))
+                if (index == 0 || IsNewCardWinner(winningCard, playerCard))
                 {
                     winningCard = playerCard;
-                    winningPlayerIndex = playerIndex;
+                    winningIndex = GetPlayerIndex(HandPlayers[index]);
                 }
             }
 
-            return winningPlayerIndex;
+            return winningIndex;
         }
 
         /// <summary>
         /// Check if a new card is the new winner.
         /// </summary>
-        private bool IsNewCardWinner(Card<EnglishCardSuit, EnglishCardRank> winningCard, Card<EnglishCardSuit, EnglishCardRank> newCard)
+        private bool IsNewCardWinner(EnglishCard winningCard, EnglishCard newCard)
         {
             if (newCard.Suit == Triunfo.Suit && winningCard.Suit != Triunfo.Suit)
             {
@@ -321,23 +372,14 @@ namespace CardGames.Basas
         {
             var mixedDeck = deck.StartDealingCards();
 
-            playerCards = new List<Card<EnglishCardSuit, EnglishCardRank>>[PlayersNumber];
-
-            for (var pi = 0; pi < PlayersNumber; pi++)
+            foreach (var status in playerStatus)
             {
-                var playerIndex = GetPlayerIndex(pi + currFirstPlayer);
-                var cardsPerPlayer = BasasConsts.RoundCards[currentRound];
+                status.Cards.Clear();
 
-                for (var ri = 0; ri < cardsPerPlayer; ri++)
+                for (var ri = 0; ri < CurrRoundCards; ri++)
                 {
                     var card = mixedDeck.GetNextCard();
-
-                    if (ri == 0)
-                    {
-                        playerCards[playerIndex] = new List<Card<EnglishCardSuit, EnglishCardRank>>();
-                    }
-
-                    playerCards[playerIndex].Add(card);
+                    status.Cards.Add(card);
                 }
             }
 
@@ -345,19 +387,43 @@ namespace CardGames.Basas
         }
 
         /// <summary>
-        /// Get a player.
+        /// Initialize hand players and cards.
         /// </summary>
-        private Player GetPlayer(int index)
+        private void InitHand()
         {
-            return playerAtPosition[GetPlayerIndex(index)];
+            for (var index = 0; index < PlayersNumber; index++)
+            {
+                HandPlayers[index] = GetPlayerStatus(index + currFirstPlayer).Player;
+                HandCards[index] = null;
+            }
+
+            handPlayerIndex = 0;
         }
 
         /// <summary>
-        /// Get the next player of the round.
+        /// Get the player status.
         /// </summary>
-        private byte GetNextPlayerIndex()
+        private BasasPlayerStatus GetPlayerStatus(int index)
         {
-            return GetPlayerIndex(currPlayerIndex + 1);
+            return playerStatus[GetPlayerIndex(index)];
+        }
+
+        /// <summary>
+        /// Get the player status.
+        /// </summary>
+        private bool GetPlayerStatus(Player player, out BasasPlayerStatus status)
+        {
+            status = playerStatus.FirstOrDefault(i => i.Player == player);
+            return status != null;
+        }
+
+        /// <summary>
+        /// Get a player index.
+        /// </summary>
+        private byte GetPlayerIndex(Player player)
+        {
+            GetPlayerStatus(player, out BasasPlayerStatus status);
+            return status.Column;
         }
 
         /// <summary>
@@ -366,62 +432,6 @@ namespace CardGames.Basas
         private byte GetPlayerIndex(int index)
         {
             return (byte)(index % PlayersNumber);
-        }
-
-        /// <summary>
-        /// Get a player index.
-        /// </summary>
-        private byte GetPlayerIndex(Player player)
-        {
-            return (byte)playerAtPosition.IndexOf(player);
-        }
-
-        private static string GetText(EnglishCardRank rank)
-        {
-            switch (rank)
-            {
-                case EnglishCardRank.Two:
-                    return "2";
-
-                case EnglishCardRank.Three:
-                    return "3";
-
-                case EnglishCardRank.Four:
-                    return "4";
-
-                case EnglishCardRank.Five:
-                    return "5";
-
-                case EnglishCardRank.Six:
-                    return "6";
-
-                case EnglishCardRank.Seven:
-                    return "7";
-
-                case EnglishCardRank.Eight:
-                    return "8";
-
-                case EnglishCardRank.Nine:
-                    return "9";
-
-                case EnglishCardRank.Ten:
-                    return "10";
-
-                case EnglishCardRank.Jack:
-                    return "J";
-
-                case EnglishCardRank.Queen:
-                    return "Q";
-
-                case EnglishCardRank.King:
-                    return "K";
-
-                case EnglishCardRank.Ace:
-                    return "A";
-
-                default:
-                    return null;
-            }
         }
     }
 }
