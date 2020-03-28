@@ -134,7 +134,17 @@ namespace CardGames.Basas
         /// </summary>
         public List<EnglishCard> GetCards(Player player)
         {
-            return GetPlayerStatus(player, out BasasPlayerStatus status) ? status.Cards : null;
+            if (GetPlayerStatus(player, out BasasPlayerStatus status))
+            {
+                status.Cards.Sort((c1, c2) =>
+                {
+                    return 1000 * ((int)c1.Suit - (int)c2.Suit) + ((int)c1.Rank - (int)c2.Rank);
+                });
+
+                return status.Cards;
+            }
+
+            return null;
         }
 
         /// <summary>
