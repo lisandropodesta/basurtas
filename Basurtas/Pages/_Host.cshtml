@@ -20,9 +20,21 @@
     <script src="_framework/blazor.server.js"></script>
 
     <script>
+
         window.ShowAlert = (message) => {
             alert(message);
         }
+
+        window.CopyContentToClipboard = (text) => {
+            var dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            dummy.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+        }
+
     </script>
 </body>
 </html>

@@ -1,37 +1,59 @@
-﻿<div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">Basurtas</a>
-    <button class="navbar-toggler" @onclick="ToggleNavMenu">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-</div>
+﻿@inject IJSRuntime jsRuntime
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <ul class="nav flex-column">
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href=@GetBasurtasLink()>
-                <span class="oi oi-plus" aria-hidden="true"></span> Iniciar Basurtas!
-            </NavLink>
-        </li>
-    </ul>
-</div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="collapse navbar-collapse align-middle">
+        <a class="navbar-brand" href="#">Basurtas</a>
+        <ul class="navbar-nav mr-auto">
+            <li><span></span></li>
+            <li class="nav-item">
+                <a class="nav-link active" href=@GetNewGameLink()>Crear Partida</a>
+            </li>
+            <li class="nav-item ml-1">
+                <a class="nav-link active" @onclick="@(()=>CopyLinkToClipboard())">Copiar Código</a>
+            </li>
+            <li class="nav-item ml-5 my-2 my-lg-0 active">
+                <div class="form-inline">
+                    <input class="form-control mr-sm-2" type="text" placeholder="Código" aria-label="JoinGame" @bind="@InputGameCode">
+                    <a class="nav-link active" href=@GetJoinGameLink() @onclick="@(()=>JoinGame())">Entrar a Partida </a>
+                </div>
+            </li>
+        </ul>
+    </div>
+</nav>
 
 @code {
-    bool collapseNavMenu = true;
+    string GameCode { get; set; }
 
-    string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    string InputGameCode { get; set; }
 
-    void ToggleNavMenu()
+    public void JoinGame()
     {
-        collapseNavMenu = !collapseNavMenu;
+        GameCode = InputGameCode;
+        InvokeAsync(() => StateHasChanged());
     }
 
-    public string GetBasurtasLink()
+    public string GetNewGameLink()
     {
-        return "basas/" + Guid.NewGuid().ToString();
+        if (string.IsNullOrEmpty(GameCode))
+        {
+            GameCode = Guid.NewGuid().ToString().Substring(0, 8);
+        }
+
+        return "basas/" + GameCode;
+    }
+
+    public string GetJoinGameLink()
+    {
+        return "basas/" + InputGameCode;
+    }
+
+    public void CopyLinkToClipboard()
+    {
+        jsRuntime.InvokeAsync<object>("CopyContentToClipboard", GameCode);
+    }
+
+    public void SetPlayerName(string name)
+    {
+
     }
 }

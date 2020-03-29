@@ -5,33 +5,168 @@
 @inherits GamePage
 @inject IJSRuntime jsRuntime
 
-<h1>Basurtas</h1>
+<div class="main">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="navbar-collapse align-middle">
+            <ul class="navbar-nav mr-auto">
+                <li />
+                <li class="nav-item mr-2">
+                    <h3>@player.NickName &#124;</h3>
+                </li>
 
-<!-- Input name -->
+                @switch (GameState)
+                {
+                    case BasasState.Build:
+                        <li class="nav-item my-2 my-lg-0">
+                            <div class="form-inline">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="basic-addon1">Ingresa tu nombre</span>
+                                </div>
+                                <input class="form-control mr-sm-2" type="text" placeholder="" aria-label="NickGame" @bind="PlayerNickName">
+                            </div>
+                        </li>
+
+                        @if (IsCreator)
+                        {
+                            <li class="nav-item ml-1">
+                                <button type="button" class="btn btn-primary" @onclick="Start">Iniciar Partida</button>
+                            </li>
+                        }
+
+                        <li class="nav-item ml-2">
+                            <h3>Jugadores: @PlayersListText (@PlayersNumber)</h3>
+                        </li>
+                        break;
+
+                    case BasasState.HandFinished:
+                        <li class="nav-item ml-1">
+                            <h3>Basa ganada por @Game.HandWinner?.NickName</h3>
+                        </li>
+
+                        @if (IsCreator)
+                        {
+                            <li class="nav-item ml-1">
+                                <button type="button" class="btn btn-primary" @onclick="Continue">Continuar Partida</button>
+                            </li>
+                        }
+                        break;
+
+                    case BasasState.Bid:
+                        if (Game.CurrPlayer == player)
+                        {
+                            for (byte bid = 0; bid <= Game.CurrRoundCards; bid++)
+                            {
+                                if (Game.IsValidBid(player, bid))
+                                {
+                                    byte bc = bid;
+                                    <li class="nav-item ml-1">
+                                        <button class="btn btn-primary" @onclick="@(() => PlaceBid(bc))">Pedir @bid</button>
+                                    </li>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <li class="nav-item ml-1">
+                                <h3>Pide @Game.CurrPlayer.NickName</h3>
+                            </li>
+                        }
+                        break;
+
+                    case BasasState.Play:
+                        if (Game.CurrPlayer == player)
+                        {
+                            <li class="nav-item ml-1">
+                                <h3>Es tu turno<br /></h3>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item ml-1">
+                                <h3>Juega @Game.CurrPlayer.NickName</h3>
+                            </li>
+                        }
+                        break;
+
+                    case BasasState.GameFinished:
+                        <li class="nav-item ml-1">
+                            <h3>Partida ganada por @Game.GameWinner</h3>
+                        </li>
+                        break;
+
+                }
+            </ul>
+
+            @switch (GameState)
+            {
+                case BasasState.Bid:
+                case BasasState.Play:
+                case BasasState.HandFinished:
+                case BasasState.GameFinished:
+                    <button class="btn btn-primary" type="button" @onclick="ToggleScoreboard">
+                        Puntajes
+                    </button>
+                    break;
+            }
+        </div>
+    </nav>
+</div>
+
+@if (GameState == BasasState.Bid && Game.CurrPlayer == player)
+{
+    <div class="collapse">
+        <audio autoplay controls><source src="/sound/bid.wav" /></audio>
+    </div>
+}
+
+@if (GameState == BasasState.Play && Game.CurrPlayer == player)
+{
+    <div class="collapse">
+        <audio autoplay controls><source src="/sound/play.wav" /></audio>
+    </div>
+}
+
+<!-- Scoreboard -->
 @switch (GameState)
 {
-    case BasasState.Build:
-        <hr />
-        <h3>Cantidad de jugadores: @PlayersListText (@PlayersNumber)</h3>
-
-        <p>
-            Nombre:
-            <input type="text" @bind="PlayerNickName" /><br />
-        </p>
-
-        @if (@IsCreator)
-        {
-            <button class="btn btn-primary" @onclick="Start">Iniciar juego!</button>
-        }
-        break;
-
+    case BasasState.Bid:
+    case BasasState.Play:
     case BasasState.HandFinished:
-        @if (@IsCreator)
+    case BasasState.GameFinished:
+        if (IsScoreboardVisible)
         {
-            <button class="btn btn-primary" @onclick="Continue">Continuar</button>
+            <div class="card card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr class="table-dark">
+                            <th scope="col"></th>
+                            @foreach (var p in Game.Players)
+                            {
+                                <th scope="col">@p.NickName</th>
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (var index = 0; index < Game.Scoreboard.Rounds.Length; index++)
+                        {
+                            var r = Game.Scoreboard.Rounds[index];
+                            <tr>
+                                <td scope="col">@BasasConsts.RoundCards[index]</td>
+
+                                @for (var i = 0; i < Game.Players.Count; i++)
+                                {
+                                    <td>@r.Player[i].Bid / @r.Player[i].Basas / @r.Player[i].Score</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
         break;
 }
+
 
 <!-- Cards -->
 @switch (GameState)
@@ -39,7 +174,6 @@
     case BasasState.Bid:
     case BasasState.Play:
     case BasasState.HandFinished:
-        <hr />
         <table>
             <tr>
                 <td><h3> Triunfo</h3></td>
@@ -47,20 +181,25 @@
                 {
                     foreach (var player in Game.HandPlayers)
                     {
-                        <td><h3>@player?.NickName</h3></td>
+                        <td>
+                            <h3>@player?.NickName</h3>
+                            <label>@Game.GetPlayerScore(player)</label>
+                        </td>
                     }
                 }
             </tr>
             <tr>
                 <td>
-                    <img src=@Game.GetCardFile(Game.Triunfo) />
+                    <img width="100" height="125" src=@Game.GetCardFile(Game.Triunfo) />
                 </td>
 
                 @if (Game.HandCards != null)
                 {
                     foreach (var card in Game.HandCards)
                     {
-                        <td><img src=@Game.GetCardFile(card) /></td>
+                        <td>
+                            <img width="100" height="125" src=@Game.GetCardFile(card) />
+                        </td>
                     }
                 }
             </tr>
@@ -72,80 +211,9 @@
             <h3>Tus cartas:</h3>
             foreach (var card in Cards)
             {
-                <img src=@Game.GetCardFile(card) @onclick="@(()=> PlayCard(card))" />
+                <img width="100" height="125" src=@Game.GetCardFile(card) @onclick="@(()=> PlayCard(card))" />
             }
         }
-        break;
-}
-
-<hr />
-
-<!-- Bid/Play -->
-@switch (GameState)
-{
-    case BasasState.Bid:
-        if (Game.CurrPlayer == player)
-        {
-            for (byte bid = 0; bid <= Game.CurrRoundCards; bid++)
-            {
-                if (Game.IsValidBid(player, bid))
-                {
-                    byte bc = bid;
-                    <button class="btn btn-primary" @onclick="@(() => PlaceBid(bc))">Pedir @bid</button>
-                }
-            }
-        }
-        else
-        {
-            <p>Jugador pidiendo: @Game.CurrPlayer?.NickName</p>
-        }
-        break;
-
-    case BasasState.Play:
-        if (Game.CurrPlayer == player)
-        {
-            <h3>Es tu turno<br /></h3>
-        }
-        else
-        {
-            <h4>Turno de @Game.CurrPlayer.NickName</h4>
-        }
-        break;
-}
-
-<!-- Scoreboard -->
-@switch (GameState)
-{
-    case BasasState.Bid:
-    case BasasState.Play:
-    case BasasState.HandFinished:
-        <hr />
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th scope="col"></th>
-                    @foreach (var p in Game.Players)
-                    {
-                        <th scope="col">@p.NickName</th>
-                    }
-                </tr>
-            </thead>
-
-            <tbody>
-                @for (var index = 0; index < Game.Scoreboard.Rounds.Length; index++)
-                {
-                    var r = Game.Scoreboard.Rounds[index];
-                    <tr>
-                        <td scope="col">@BasasConsts.RoundCards[index]</td>
-
-                        @for (var i = 0; i < Game.Players.Count; i++)
-                        {
-                            <td>@r.Player[i].Bid / @r.Player[i].Basas / @r.Player[i].Score</td>
-                        }
-                    </tr>
-                }
-            </tbody>
-        </table>
         break;
 }
 
@@ -153,6 +221,8 @@
 
     [Parameter]
     public string Uid { get; set; }
+
+    public bool IsCreator { get; private set; }
 
     public BasasGame Game => game;
 
@@ -162,9 +232,11 @@
 
     public string PlayersListText => Game?.PlayersListText;
 
-    public bool IsCreator { get; private set; }
-
     public string PlayerNickName { get => player.NickName; set => player.NickName = value; }
+
+    public string InputNickName { get; set; }
+
+    public bool IsScoreboardVisible { get; set; }
 
     public List<EnglishCard> Cards { get; private set; }
 
@@ -178,7 +250,7 @@
         }
     }
 
-    public int currentBid;
+    private int currentBid;
 
     private static readonly Dictionary<string, BasasGame> cache = new Dictionary<string, BasasGame>();
 
@@ -206,6 +278,11 @@
         });
     }
 
+    public void SetNickName()
+    {
+        PlayerNickName = InputNickName;
+    }
+
     public void Start()
     {
         SafeAction(Game.Start);
@@ -214,6 +291,12 @@
     public void Continue()
     {
         SafeAction(Game.Continue);
+    }
+
+    public void ToggleScoreboard()
+    {
+        IsScoreboardVisible = !IsScoreboardVisible;
+        InvokeAsync(() => StateHasChanged());
     }
 
     public void PlayCard(EnglishCard card)
@@ -245,8 +328,13 @@
         }
         catch (Exception x)
         {
-            jsRuntime.InvokeAsync<object>("ShowAlert", x.Message);
+            Alert(x.Message);
         }
+    }
+
+    private void Alert(string message)
+    {
+        jsRuntime.InvokeAsync<object>("ShowAlert", message);
     }
 
     private void OnGameStateChanged(object sender, EventArgs e)

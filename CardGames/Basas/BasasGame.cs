@@ -38,6 +38,16 @@ namespace CardGames.Basas
         public Player CurrPlayer => HandPlayers[handPlayerIndex];
 
         /// <summary>
+        /// Hand winned.
+        /// </summary>
+        public Player HandWinner { get; private set; }
+
+        /// <summary>
+        /// Name of the winner(s).
+        /// </summary>
+        public string GameWinner { get; private set; }
+
+        /// <summary>
         /// Number of cards in current round.
         /// </summary>
         public byte CurrRoundCards { get; private set; }
@@ -119,7 +129,9 @@ namespace CardGames.Basas
         /// </summary>
         private void CreatePlayersList()
         {
-            var list = Players.ToArray().ToList();
+            var arr = Players.ToArray();
+            //Tool.Mix(arr);
+            var list = arr.ToList();
 
             // TODO: mix players
 
@@ -216,6 +228,15 @@ namespace CardGames.Basas
         }
 
         /// <summary>
+        /// Get the current scoreboard for the player.
+        /// </summary>
+        public BasasScoreboardRoundPlayer GetPlayerScore(Player player)
+        {
+            var index = GetPlayerIndex(player);
+            return Scoreboard.Rounds[currRound].Player[index];
+        }
+
+        /// <summary>
         /// Validates a card.
         /// </summary>
         private bool IsValidCard(BasasPlayerStatus status, EnglishCard card)
@@ -275,14 +296,20 @@ namespace CardGames.Basas
                         InitHand();
                         State = BasasState.Play;
                     }
-                    else if (currRound < BasasConsts.RoundsNumber)
-                    {
-                        currRound++;
-                        StartRound();
-                    }
                     else
                     {
-                        State = BasasState.GameFinished;
+                        Scoreboard.RoundEnds();
+
+                        if (currRound < BasasConsts.RoundsNumber - 1)
+                        {
+                            currRound++;
+                            StartRound();
+                        }
+                        else
+                        {
+                            CalcGameWinner();
+                            State = BasasState.GameFinished;
+                        }
                     }
                     break;
 
@@ -328,7 +355,9 @@ namespace CardGames.Basas
         {
             leftHandsToPlay--;
 
-            var index = CalcHandWinner();
+            HandWinner = CalcHandWinner();
+            var index = GetPlayerIndex(HandWinner);
+
             Scoreboard.AddBasaToPlayer(index);
             currFirstPlayer = index;
 
@@ -336,12 +365,39 @@ namespace CardGames.Basas
         }
 
         /// <summary>
+        /// Calculates the game winner.
+        /// </summary>
+        private void CalcGameWinner()
+        {
+            var winner = new List<string>();
+            var score = 0;
+
+            for (var index = 0; index < PlayersNumber; index++)
+            {
+                var status = playerStatus[index];
+                var finalScore = Scoreboard.Rounds[BasasConsts.RoundsNumber - 1].Player[status.Column].Score ?? 0;
+                if (score < finalScore)
+                {
+                    winner.Clear();
+                    winner.Add(status.Player.NickName);
+                    score = finalScore;
+                }
+                else if (score == finalScore)
+                {
+                    winner.Add(status.Player.NickName);
+                }
+            }
+
+            GameWinner = string.Join(", ", winner);
+        }
+
+        /// <summary>
         /// Calculates winner.
         /// </summary>
-        private byte CalcHandWinner()
+        private Player CalcHandWinner()
         {
-            byte winningIndex = 0;
             EnglishCard winningCard = null;
+            Player winner = null;
 
             for (var index = 0; index < PlayersNumber; index++)
             {
@@ -350,11 +406,11 @@ namespace CardGames.Basas
                 if (index == 0 || IsNewCardWinner(winningCard, playerCard))
                 {
                     winningCard = playerCard;
-                    winningIndex = GetPlayerIndex(HandPlayers[index]);
+                    winner = HandPlayers[index];
                 }
             }
 
-            return winningIndex;
+            return winner;
         }
 
         /// <summary>

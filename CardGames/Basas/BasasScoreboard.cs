@@ -35,13 +35,18 @@ namespace CardGames.Basas
                 throw new ArgumentException("Invalid round");
             }
 
-            for (var i = 0; i < playersCount; i++)
-            {
-                UpdateScore(i, 0);
-            }
+            UpdateAllRoundScores();
 
             started = true;
             currRound = round;
+        }
+
+        /// <summary>
+        /// Round ends.
+        /// </summary>
+        public void RoundEnds()
+        {
+            UpdateAllRoundScores();
         }
 
         /// <summary>
@@ -76,6 +81,17 @@ namespace CardGames.Basas
             }
 
             UpdateScore(playerIndex, 1);
+        }
+
+        /// <summary>
+        /// Updates score of the round for all players.
+        /// </summary>
+        private void UpdateAllRoundScores()
+        {
+            for (var i = 0; i < playersCount; i++)
+            {
+                UpdateScore(i, 0);
+            }
         }
 
         /// <summary>

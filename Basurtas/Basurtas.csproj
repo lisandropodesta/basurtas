@@ -5,16 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="wwwroot\Images\EnglishCards\Club_2.svg" />
-    <Content Remove="wwwroot\Images\EnglishCards\Club_3.svg" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="wwwroot\Images\EnglishCards\club_2.svg" />
-    <None Include="wwwroot\Images\EnglishCards\club_3.svg" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Lit.Ui" Version="1.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.0.0" />
@@ -22,6 +12,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CardGames\CardGames.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\sound\" />
   </ItemGroup>
 
 </Project>
