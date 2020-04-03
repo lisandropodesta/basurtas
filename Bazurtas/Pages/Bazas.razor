@@ -1,7 +1,7 @@
-﻿@page "/basas/{uid}"
-@using Basurtas.Model;
+﻿@page "/bazas/{uid}"
+@using Bazurtas.Model;
 @using CardGames;
-@using CardGames.Basas;
+@using CardGames.Bazas;
 @inherits GamePage
 @inject IJSRuntime jsRuntime
 
@@ -16,7 +16,7 @@
 
                 @switch (GameState)
                 {
-                    case BasasState.Build:
+                    case BazasState.Build:
                         <li class="nav-item my-2 my-lg-0">
                             <div class="form-inline">
                                 <div class="input-group-prepend">
@@ -38,9 +38,9 @@
                         </li>
                         break;
 
-                    case BasasState.HandFinished:
+                    case BazasState.HandFinished:
                         <li class="nav-item ml-1">
-                            <h3>Basa ganada por @Game.HandWinner?.NickName</h3>
+                            <h3>Baza ganada por @Game.HandWinner?.NickName</h3>
                         </li>
 
                         @if (IsCreator)
@@ -51,7 +51,7 @@
                         }
                         break;
 
-                    case BasasState.Bid:
+                    case BazasState.Bid:
                         if (Game.CurrPlayer == player)
                         {
                             for (byte bid = 0; bid <= Game.CurrRoundCards; bid++)
@@ -73,7 +73,7 @@
                         }
                         break;
 
-                    case BasasState.Play:
+                    case BazasState.Play:
                         if (Game.CurrPlayer == player)
                         {
                             <li class="nav-item ml-1">
@@ -88,7 +88,7 @@
                         }
                         break;
 
-                    case BasasState.GameFinished:
+                    case BazasState.GameFinished:
                         <li class="nav-item ml-1">
                             <h3>Partida ganada por @Game.GameWinner</h3>
                         </li>
@@ -99,10 +99,10 @@
 
             @switch (GameState)
             {
-                case BasasState.Bid:
-                case BasasState.Play:
-                case BasasState.HandFinished:
-                case BasasState.GameFinished:
+                case BazasState.Bid:
+                case BazasState.Play:
+                case BazasState.HandFinished:
+                case BazasState.GameFinished:
                     <button class="btn btn-primary" type="button" @onclick="ToggleScoreboard">
                         Puntajes
                     </button>
@@ -112,14 +112,14 @@
     </nav>
 </div>
 
-@if (GameState == BasasState.Bid && Game.CurrPlayer == player)
+@if (GameState == BazasState.Bid && Game.CurrPlayer == player)
 {
     <div class="collapse">
         <audio autoplay controls><source src="/sound/bid.wav" /></audio>
     </div>
 }
 
-@if (GameState == BasasState.Play && Game.CurrPlayer == player)
+@if (GameState == BazasState.Play && Game.CurrPlayer == player)
 {
     <div class="collapse">
         <audio autoplay controls><source src="/sound/play.wav" /></audio>
@@ -129,10 +129,10 @@
 <!-- Scoreboard -->
 @switch (GameState)
 {
-    case BasasState.Bid:
-    case BasasState.Play:
-    case BasasState.HandFinished:
-    case BasasState.GameFinished:
+    case BazasState.Bid:
+    case BazasState.Play:
+    case BazasState.HandFinished:
+    case BazasState.GameFinished:
         if (IsScoreboardVisible)
         {
             <div class="card card-body">
@@ -152,11 +152,11 @@
                         {
                             var r = Game.Scoreboard.Rounds[index];
                             <tr>
-                                <td scope="col">@BasasConsts.RoundCards[index]</td>
+                                <td scope="col">@BazasConsts.RoundCards[index]</td>
 
                                 @for (var i = 0; i < Game.Players.Count; i++)
                                 {
-                                    <td>@r.Player[i].Bid / @r.Player[i].Basas / @r.Player[i].Score</td>
+                                    <td>@r.Player[i].Bid / @r.Player[i].Bazas / @r.Player[i].Score</td>
                                 }
                             </tr>
                         }
@@ -171,9 +171,9 @@
 <!-- Cards -->
 @switch (GameState)
 {
-    case BasasState.Bid:
-    case BasasState.Play:
-    case BasasState.HandFinished:
+    case BazasState.Bid:
+    case BazasState.Play:
+    case BazasState.HandFinished:
         <table>
             <tr>
                 <td><h3> Triunfo</h3></td>
@@ -224,9 +224,9 @@
 
     public bool IsCreator { get; private set; }
 
-    public BasasGame Game => game;
+    public BazasGame Game => game;
 
-    public BasasState GameState => Game?.State ?? BasasState.Build;
+    public BazasState GameState => Game?.State ?? BazasState.Build;
 
     public int PlayersNumber => Game?.PlayersNumber ?? 0;
 
@@ -252,11 +252,11 @@
 
     private int currentBid;
 
-    private static readonly Dictionary<string, BasasGame> cache = new Dictionary<string, BasasGame>();
+    private static readonly Dictionary<string, BazasGame> cache = new Dictionary<string, BazasGame>();
 
     private Player player;
 
-    private BasasGame game;
+    private BazasGame game;
 
     protected override void OnInitialized()
     {
@@ -266,7 +266,7 @@
 
         if (!cache.TryGetValue(Uid, out game))
         {
-            game = new BasasGame();
+            game = new BazasGame();
             cache.Add(Uid, game);
             IsCreator = true;
         }
@@ -341,7 +341,7 @@
     {
         switch (Game.State)
         {
-            case BasasState.Bid:
+            case BazasState.Bid:
                 Cards = Game.GetCards(player);
                 break;
         }

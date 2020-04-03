@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace CardGames.Basas
+namespace CardGames.Bazas
 {
-    public class BasasScoreboard
+    public class BazasScoreboard
     {
-        public BasasScoreboardRound[] Rounds { get; private set; }
+        public BazasScoreboardRound[] Rounds { get; private set; }
 
         private readonly byte playersCount;
 
@@ -12,15 +12,15 @@ namespace CardGames.Basas
 
         private byte currRound;
 
-        public BasasScoreboard(int playersCount)
+        public BazasScoreboard(int playersCount)
         {
             this.playersCount = (byte)playersCount;
 
-            Rounds = new BasasScoreboardRound[BasasConsts.RoundsNumber];
+            Rounds = new BazasScoreboardRound[BazasConsts.RoundsNumber];
 
-            for (var round = 0; round < BasasConsts.RoundsNumber; round++)
+            for (var round = 0; round < BazasConsts.RoundsNumber; round++)
             {
-                Rounds[round] = new BasasScoreboardRound(playersCount);
+                Rounds[round] = new BazasScoreboardRound(playersCount);
             }
         }
 
@@ -71,9 +71,9 @@ namespace CardGames.Basas
         }
 
         /// <summary>
-        /// Add one basa to player.
+        /// Add one baza to player.
         /// </summary>
-        public void AddBasaToPlayer(byte playerIndex)
+        public void AddBazaToPlayer(byte playerIndex)
         {
             if (playerIndex >= playersCount)
             {
@@ -95,15 +95,15 @@ namespace CardGames.Basas
         }
 
         /// <summary>
-        /// Update a player score optionally adding basas.
+        /// Update a player score optionally adding bazas.
         /// </summary>
-        private void UpdateScore(int playerIndex, byte addBasas)
+        private void UpdateScore(int playerIndex, byte addBazas)
         {
             var playerScore = Rounds[currRound].Player[playerIndex];
-            playerScore.Basas = (byte)((playerScore.Basas ?? 0) + addBasas);
+            playerScore.Bazas = (byte)((playerScore.Bazas ?? 0) + addBazas);
 
             var prev = (byte)(currRound > 0 ? Rounds[currRound - 1].Player[playerIndex].Score ?? 0 : 0);
-            playerScore.Score = (byte)(prev + playerScore.Basas + (playerScore.Bid == playerScore.Basas ? 10 : 0));
+            playerScore.Score = (byte)(prev + playerScore.Bazas + (playerScore.Bid == playerScore.Bazas ? 10 : 0));
         }
     }
 }

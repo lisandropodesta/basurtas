@@ -1,6 +1,6 @@
-﻿namespace CardGames.Basas
+﻿namespace CardGames.Bazas
 {
-    public static class BasasConsts
+    public static class BazasConsts
     {
         /// <summary>
         /// Total number of rounds.

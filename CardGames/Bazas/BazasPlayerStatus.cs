@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace CardGames.Basas
+namespace CardGames.Bazas
 {
-    public class BasasPlayerStatus
+    public class BazasPlayerStatus
     {
         public Player Player { get; private set; }
 
@@ -12,7 +12,7 @@ namespace CardGames.Basas
 
         private readonly List<EnglishCard> cards = new List<EnglishCard>();
 
-        public BasasPlayerStatus(byte column, Player player)
+        public BazasPlayerStatus(byte column, Player player)
         {
             Column = column;
             Player = player;

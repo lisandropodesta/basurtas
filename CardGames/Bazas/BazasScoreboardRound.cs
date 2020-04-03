@@ -1,21 +1,21 @@
 ﻿using System.Linq;
 
-namespace CardGames.Basas
+namespace CardGames.Bazas
 {
-    public class BasasScoreboardRound
+    public class BazasScoreboardRound
     {
-        public BasasScoreboardRoundPlayer[] Player { get; private set; }
+        public BazasScoreboardRoundPlayer[] Player { get; private set; }
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        public BasasScoreboardRound(int playersCount)
+        public BazasScoreboardRound(int playersCount)
         {
-            Player = new BasasScoreboardRoundPlayer[playersCount];
+            Player = new BazasScoreboardRoundPlayer[playersCount];
 
             for (var i = 0; i < playersCount; i++)
             {
-                Player[i] = new BasasScoreboardRoundPlayer();
+                Player[i] = new BazasScoreboardRoundPlayer();
             }
         }
 

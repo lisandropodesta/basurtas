@@ -1,6 +1,6 @@
-﻿namespace CardGames.Basas
+﻿namespace CardGames.Bazas
 {
-    public enum BasasState
+    public enum BazasState
     {
         Build,
 

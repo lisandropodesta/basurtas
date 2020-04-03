@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System;
 
-namespace Basurtas.Model
+namespace Bazurtas.Model
 {
     public class GamePage : ComponentBase, IDisposable
     {
