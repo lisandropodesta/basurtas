@@ -3,7 +3,6 @@
 @using CardGames;
 @using CardGames.Bazas;
 @inherits GamePage
-@inject IJSRuntime jsRuntime
 
 <div class="main">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -22,7 +21,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" id="basic-addon1">Ingresa tu nombre</span>
                                 </div>
-                                <input class="form-control mr-sm-2" type="text" placeholder="" aria-label="NickGame" @bind="InputNickName">
+                                <input class="form-control mr-sm-2" type="text" placeholder="" aria-label="NickGame" @bind="InputNickName" @bind:event="oninput" @onkeyup="KeyPressed">
                                 <button type="button" class="btn btn-primary" @onclick="SetNickName">Asignar</button>
                             </div>
                         </li>
@@ -286,9 +285,30 @@
         });
     }
 
+    protected override void OnComponentReady()
+    {
+        base.OnComponentReady();
+        GetCookie(CookieUserNickName, (s) => SetNickNameFromCookie(s));
+    }
+
+    public void KeyPressed(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            SetNickName();
+        }
+    }
+
     public void SetNickName()
     {
         PlayerNickName = InputNickName;
+        SetCookie(CookieUserNickName, InputNickName);
+    }
+
+    protected void SetNickNameFromCookie(string text)
+    {
+        PlayerNickName = text;
+        StateHasChanged();
     }
 
     public void Start()
@@ -326,23 +346,6 @@
         }
 
         base.DoCloseAll();
-    }
-
-    private void SafeAction(Action action)
-    {
-        try
-        {
-            action();
-        }
-        catch (Exception x)
-        {
-            Alert(x.Message);
-        }
-    }
-
-    private void Alert(string message)
-    {
-        jsRuntime.InvokeAsync<object>("blazorExtensions.ShowAlert", message);
     }
 
     private void OnGameStateChanged(object sender, EventArgs e)

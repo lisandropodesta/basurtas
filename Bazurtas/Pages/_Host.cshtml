@@ -37,6 +37,10 @@
                 document.body.removeChild(dummy);
             },
 
+            ReadCookie: function () {
+                return document.cookie;
+            },
+
             WriteCookie: function (name, value, days) {
                 var expires;
                 if (days) {
