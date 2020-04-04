@@ -129,15 +129,11 @@ namespace CardGames.Bazas
         /// </summary>
         private void CreatePlayersList()
         {
-            var arr = Players.ToArray();
-            //Tool.Mix(arr);
-            var list = arr.ToList();
+            MixPlayers();
 
-            // TODO: mix players
-
-            for (byte column = 0; column < list.Count; column++)
+            for (byte column = 0; column < Players.Count; column++)
             {
-                playerStatus[column] = new BazasPlayerStatus(column, list[column]);
+                playerStatus[column] = new BazasPlayerStatus(column, Players[column]);
             }
         }
 
@@ -298,8 +294,6 @@ namespace CardGames.Bazas
                     }
                     else
                     {
-                        Scoreboard.RoundEnds();
-
                         if (currRound < BazasConsts.RoundsNumber - 1)
                         {
                             currRound++;
@@ -357,9 +351,13 @@ namespace CardGames.Bazas
 
             HandWinner = CalcHandWinner();
             var index = GetPlayerIndex(HandWinner);
-
-            Scoreboard.AddBazaToPlayer(index);
             currFirstPlayer = index;
+
+            Scoreboard.HandEnd(index);
+            if (leftHandsToPlay == 0)
+            {
+                Scoreboard.RoundEnds();
+            }
 
             State = BazasState.HandFinished;
         }

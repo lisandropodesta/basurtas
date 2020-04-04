@@ -8,9 +8,15 @@
 
         public byte? Score { get; set; }
 
+        public byte PrevScore { get; set; }
+
+        public string AskedAndDone => Bid.ToString() + (Bazas.HasValue ? " / " + Bazas : string.Empty);
+
+        public string CurrScore => (Score ?? PrevScore).ToString();
+
         public override string ToString()
         {
-            return $"{Bid} / {Bazas}";
+            return Bid.ToString() + (Bazas.HasValue ? " / " + Bazas : string.Empty) + (Score.HasValue ? " / " + Score : string.Empty);
         }
     }
 }

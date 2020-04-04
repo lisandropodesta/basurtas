@@ -97,6 +97,14 @@ namespace CardGames
             // TODO: check what happens if the game has started.
         }
 
+        /// <summary>
+        /// Mix the players list.
+        /// </summary>
+        public void MixPlayers()
+        {
+            Tool.Mix(players);
+        }
+
         #region Virtual abstract members
 
         /// <summary>

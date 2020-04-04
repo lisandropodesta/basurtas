@@ -50,9 +50,10 @@ namespace CardGames
             public MixedDeck(List<T> cards)
             {
                 this.cards = cards;
-                position = Enumerable.Range(0, cards.Count).ToArray();
 
-                Tool.Mix(position);
+                var index = Enumerable.Range(0, cards.Count).ToList();
+                Tool.Mix(index);
+                position = index.ToArray();
             }
 
             public T GetNextCard()
