@@ -341,7 +341,7 @@
 
     private void Alert(string message)
     {
-        jsRuntime.InvokeAsync<object>("ShowAlert", message);
+        jsRuntime.InvokeAsync<object>("blazorExtensions.ShowAlert", message);
     }
 
     private void OnGameStateChanged(object sender, EventArgs e)

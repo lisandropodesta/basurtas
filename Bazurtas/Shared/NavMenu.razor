@@ -49,7 +49,7 @@
 
     public void CopyLinkToClipboard()
     {
-        jsRuntime.InvokeAsync<object>("CopyContentToClipboard", GameCode);
+        jsRuntime.InvokeAsync<object>("blazorExtensions.CopyContentToClipboard", GameCode);
     }
 
     public void SetPlayerName(string name)

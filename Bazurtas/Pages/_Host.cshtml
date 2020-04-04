@@ -21,18 +21,34 @@
 
     <script>
 
-        window.ShowAlert = (message) => {
-            alert(message);
-        }
+        window.blazorExtensions = {
 
-        window.CopyContentToClipboard = (text) => {
-            var dummy = document.createElement("textarea");
-            document.body.appendChild(dummy);
-            dummy.value = text;
-            dummy.select();
-            dummy.setSelectionRange(0, 99999);
-            document.execCommand("copy");
-            document.body.removeChild(dummy);
+            ShowAlert: function (message) {
+                alert(message);
+            },
+
+            CopyContentToClipboard: function (text) {
+                var dummy = document.createElement("textarea");
+                document.body.appendChild(dummy);
+                dummy.value = text;
+                dummy.select();
+                dummy.setSelectionRange(0, 99999);
+                document.execCommand("copy");
+                document.body.removeChild(dummy);
+            },
+
+            WriteCookie: function (name, value, days) {
+                var expires;
+                if (days) {
+                    var data = new Date();
+                    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+                    expires = "; expires=" + date.toGMTString();
+                }
+                else {
+                    expires = "";
+                }
+                document.cookie = name + "=" + value + expires + "; path=/";
+            }
         }
 
     </script>
