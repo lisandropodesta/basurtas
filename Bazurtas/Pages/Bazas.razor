@@ -22,7 +22,8 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" id="basic-addon1">Ingresa tu nombre</span>
                                 </div>
-                                <input class="form-control mr-sm-2" type="text" placeholder="" aria-label="NickGame" @bind="PlayerNickName">
+                                <input class="form-control mr-sm-2" type="text" placeholder="" aria-label="NickGame" @bind="InputNickName">
+                                <button type="button" class="btn btn-primary" @onclick="SetNickName">Asignar</button>
                             </div>
                         </li>
 

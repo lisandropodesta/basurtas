@@ -5,18 +5,18 @@
         <a class="navbar-brand" href="#">Bazurtas</a>
         <ul class="navbar-nav mr-auto">
             <li><span></span></li>
-            <li class="nav-item">
-                <a class="nav-link active" href=@GetNewGameLink()>Crear Partida</a>
-            </li>
-            <li class="nav-item ml-1">
-                <a class="nav-link active" @onclick="@(()=>CopyLinkToClipboard())">Copiar Código</a>
-            </li>
-            <li class="nav-item ml-5 my-2 my-lg-0 active">
-                <div class="form-inline">
-                    <input class="form-control mr-sm-2" type="text" placeholder="Código" aria-label="JoinGame" @bind="@InputGameCode">
-                    <a class="nav-link active" href=@GetJoinGameLink() @onclick="@(()=>JoinGame())">Entrar a Partida </a>
-                </div>
-            </li>
+            @*<li class="nav-item">
+            <a class="nav-link active" href=@GetNewGameLink()>Crear Partida</a>
+        </li>
+        <li class="nav-item ml-1">
+            <a class="nav-link active" @onclick="@(()=>CopyLinkToClipboard())">Copiar Código</a>
+        </li>
+        <li class="nav-item ml-5 my-2 my-lg-0 active">
+            <div class="form-inline">
+                <input class="form-control mr-sm-2" type="text" placeholder="Código" aria-label="JoinGame" @bind="@InputGameCode">
+                <a class="nav-link active" href=@GetJoinGameLink() @onclick="@(()=>JoinGame())">Entrar a Partida </a>
+            </div>
+        </li>*@
         </ul>
     </div>
 </nav>

@@ -3,5 +3,21 @@
 <html>
 <body>
     <h1>Bienvenido a Bazurtas!</h1>
+    <ul class="navbar-nav mr-auto">
+        <li><span></span></li>
+        <li class="my-2 my-lg-0">
+            <div>
+                <a class="btn btn-primary" href=@GetNewGameLink()>Crear Partida</a>
+            </div>
+        </li>
+    </ul>
 </body>
 </html>
+
+@code {
+    public string GetNewGameLink()
+    {
+        var gameCode = Guid.NewGuid().ToString().Substring(0, 8);
+        return "bazas/" + gameCode;
+    }
+}
