@@ -138,33 +138,48 @@
     case BazasState.GameFinished:
         if (IsScoreboardVisible)
         {
-            <div class="card card-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr class="table-dark">
-                            <th scope="col"></th>
-                            @foreach (var p in Game.Players)
-                            {
-                                <th scope="col">@p.NickName</th>
-                            }
-                        </tr>
-                    </thead>
+            <div class="modal-xl" tabindex="-1" role="dialog" style="display:block">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content" style="width:@(110+Game.PlayersNumber*110)px">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Puntajes</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="ToggleScoreboard">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card card-body">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr class="table-dark">
+                                            <th scope="col"></th>
+                                            @foreach (var p in Game.Players)
+                                            {
+                                                <th scope="col">@p.NickName</th>
+                                            }
+                                        </tr>
+                                    </thead>
 
-                    <tbody>
-                        @for (var index = 0; index < Game.Scoreboard.Rounds.Length; index++)
-                        {
-                            var r = Game.Scoreboard.Rounds[index];
-                            <tr>
-                                <td scope="col">@BazasConsts.RoundCards[index]</td>
+                                    <tbody>
+                                        @for (var index = 0; index < Game.Scoreboard.Rounds.Length; index++)
+                                        {
+                                            var r = Game.Scoreboard.Rounds[index];
+                                            <tr>
+                                                <th scope="row">@BazasConsts.RoundCards[index]</th>
 
-                                @for (var i = 0; i < Game.Players.Count; i++)
-                                {
-                                    <td>@r.Player[i]</td>
-                                }
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                                                @for (var i = 0; i < Game.Players.Count; i++)
+                                                {
+                                                    var s = r.Player[i];
+                                                    <td scope="col"><sup>@s.AskedAndDone</sup>@(" " + s.Score)</td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         }
         break;
