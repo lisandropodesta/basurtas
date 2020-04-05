@@ -13,87 +13,90 @@
                     <h3>@player.NickName &#124;</h3>
                 </li>
 
-                @switch (GameState)
+                @if (string.IsNullOrEmpty(PlayerNickName) || GameState == BazasState.Build)
                 {
-                    case BazasState.Build:
-                        <li class="nav-item my-2 my-lg-0">
-                            <div class="form-inline">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" id="basic-addon1">Ingresa tu nombre</span>
-                                </div>
-                                <input class="form-control mr-sm-2" type="text" placeholder="" aria-label="NickGame" @bind="InputNickName" @bind:event="oninput" @onkeyup="KeyPressed">
-                                <button type="button" class="btn btn-primary" @onclick="SetNickName">Asignar</button>
+                    <li class="nav-item my-2 my-lg-0">
+                        <div class="form-inline">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="basic-addon1">Ingresa tu nombre</span>
                             </div>
-                        </li>
+                            <input class="form-control mr-sm-2" type="text" placeholder="" aria-label="NickGame" @bind="InputNickName" @bind:event="oninput" @onkeyup="KeyPressed">
+                            <button type="button" class="btn btn-primary" @onclick="SetNickName">Asignar</button>
+                        </div>
+                    </li>
 
-                        @if (IsCreator)
-                        {
-                            <li class="nav-item ml-1">
-                                <button type="button" class="btn btn-primary" @onclick="Start">Iniciar Partida</button>
-                            </li>
-                        }
-
-                        <li class="nav-item ml-2">
-                            <h3>Jugadores: @PlayersListText (@PlayersNumber)</h3>
-                        </li>
-                        break;
-
-                    case BazasState.HandFinished:
+                    @if (IsCreator)
+                    {
                         <li class="nav-item ml-1">
-                            <h3>Baza ganada por @Game.HandWinner?.NickName</h3>
+                            <button type="button" class="btn btn-primary" @onclick="Start">Iniciar Partida</button>
                         </li>
+                    }
 
-                        @if (IsCreator)
-                        {
+                    <li class="nav-item ml-2">
+                        <h3>Jugadores: @PlayersListText (@PlayersNumber)</h3>
+                    </li>
+                }
+                else
+                {
+                    switch (GameState)
+                    {
+                        case BazasState.HandFinished:
                             <li class="nav-item ml-1">
-                                <button type="button" class="btn btn-primary" @onclick="Continue">Continuar Partida</button>
+                                <h3>Baza ganada por @Game.HandWinner?.NickName</h3>
                             </li>
-                        }
-                        break;
 
-                    case BazasState.Bid:
-                        if (Game.CurrPlayer == player)
-                        {
-                            for (byte bid = 0; bid <= Game.CurrRoundCards; bid++)
+                            @if (IsCreator)
                             {
-                                if (Game.IsValidBid(player, bid))
+                                <li class="nav-item ml-1">
+                                    <button type="button" class="btn btn-primary" @onclick="Continue">Continuar Partida</button>
+                                </li>
+                            }
+                            break;
+
+                        case BazasState.Bid:
+                            if (Game.CurrPlayer == player)
+                            {
+                                for (byte bid = 0; bid <= Game.CurrRoundCards; bid++)
                                 {
-                                    byte bc = bid;
-                                    <li class="nav-item ml-1">
-                                        <button class="btn btn-primary" @onclick="@(() => PlaceBid(bc))">Pedir @bid</button>
-                                    </li>
+                                    if (Game.IsValidBid(player, bid))
+                                    {
+                                        byte bc = bid;
+                                        <li class="nav-item ml-1">
+                                            <button class="btn btn-primary" @onclick="@(() => PlaceBid(bc))">Pedir @bid</button>
+                                        </li>
+                                    }
                                 }
                             }
-                        }
-                        else
-                        {
-                            <li class="nav-item ml-1">
-                                <h3>Pide @Game.CurrPlayer.NickName</h3>
-                            </li>
-                        }
-                        break;
+                            else
+                            {
+                                <li class="nav-item ml-1">
+                                    <h3>Pide @Game.CurrPlayer.NickName</h3>
+                                </li>
+                            }
+                            break;
 
-                    case BazasState.Play:
-                        if (Game.CurrPlayer == player)
-                        {
-                            <li class="nav-item ml-1">
-                                <h3>Es tu turno<br /></h3>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item ml-1">
-                                <h3>Juega @Game.CurrPlayer.NickName</h3>
-                            </li>
-                        }
-                        break;
+                        case BazasState.Play:
+                            if (Game.CurrPlayer == player)
+                            {
+                                <li class="nav-item ml-1">
+                                    <h3>Es tu turno<br /></h3>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item ml-1">
+                                    <h3>Juega @Game.CurrPlayer.NickName</h3>
+                                </li>
+                            }
+                            break;
 
-                    case BazasState.GameFinished:
-                        <li class="nav-item ml-1">
-                            <h3>Partida ganada por @Game.GameWinner</h3>
-                        </li>
-                        break;
+                        case BazasState.GameFinished:
+                            <li class="nav-item ml-1">
+                                <h3>Partida ganada por @Game.GameWinner</h3>
+                            </li>
+                            break;
 
+                    }
                 }
             </ul>
 
@@ -168,6 +171,13 @@
 }
 
 
+@if (!string.IsNullOrEmpty(Game.ViewersListText))
+{
+    <p class="text-right">
+        Usuarios mirando: <b>@Game.ViewersListText</b>
+    </p>
+}
+
 <!-- Cards -->
 @switch (GameState)
 {
@@ -185,7 +195,7 @@
                     foreach (var player in Game.HandPlayers)
                     {
                         var score = Game.GetPlayerScore(player);
-                        <td style="min-width:120px; padding: 0px 5px 0px 5px; align-content:center;">
+                        <td style="min-width:120px; padding: 0px 5px 0px 5px; align-content:center">
                             <h4 class="text-center">@player?.NickName</h4>
                             <div class="row">
                                 <div class="col"><h5>@score.AskedAndDone</h5></div>

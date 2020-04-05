@@ -13,6 +13,11 @@ namespace CardGames
         public IReadOnlyList<Player> Players => players;
 
         /// <summary>
+        /// Players.
+        /// </summary>
+        public IReadOnlyList<Player> Viewers => viewers;
+
+        /// <summary>
         /// Players number.
         /// </summary>
         public int PlayersNumber => players.Count;
@@ -21,6 +26,11 @@ namespace CardGames
         /// Players list as text.
         /// </summary>
         public string PlayersListText { get; private set; }
+
+        /// <summary>
+        /// Viewers list as text.
+        /// </summary>
+        public string ViewersListText { get; private set; }
 
         /// <summary>
         /// Min players number.
@@ -39,6 +49,9 @@ namespace CardGames
 
         // Players list.
         private readonly List<Player> players = new List<Player>();
+
+        // Viewer list
+        private readonly List<Player> viewers = new List<Player>();
 
         private bool started;
 
@@ -61,17 +74,27 @@ namespace CardGames
         /// </summary>
         public void AddPlayer(Player player)
         {
-            if (!players.Contains(player))
+            lock (players)
             {
-                if (IsAllowedToEnter(player, out string reason))
+                if (!players.Contains(player))
                 {
-                    player.PropertyChanged += OnPlayerPropertyChanged;
-                    players.Add(player);
-                    DoPlayersListChanged();
-                }
-                else
-                {
-                    throw new Exception(reason);
+                    if (IsAllowedToPlay(player, out string reason))
+                    {
+                        player.PropertyChanged += OnPlayerPropertyChanged;
+                        players.Add(player);
+                        DoPlayersListChanged();
+                    }
+                    else if (IsAllowedToSee(player))
+                    {
+                        player.PropertyChanged += OnViewerPropertyChanged;
+                        viewers.Add(player);
+                        DoViewersListChanged();
+                        throw new Exception($"Solo podés mirar, porque {reason}");
+                    }
+                    else
+                    {
+                        throw new Exception(reason);
+                    }
                 }
             }
         }
@@ -83,11 +106,20 @@ namespace CardGames
         {
             try
             {
-                if (players.Contains(player))
+                lock (players)
                 {
-                    player.PropertyChanged -= OnPlayerPropertyChanged;
-                    players.Remove(player);
-                    DoPlayersListChanged();
+                    if (players.Contains(player))
+                    {
+                        player.PropertyChanged -= OnPlayerPropertyChanged;
+                        players.Remove(player);
+                        DoPlayersListChanged();
+                    }
+                    else if (viewers.Contains(player))
+                    {
+                        player.PropertyChanged -= OnViewerPropertyChanged;
+                        viewers.Remove(player);
+                        DoViewersListChanged();
+                    }
                 }
             }
             catch (Exception x)
@@ -110,7 +142,7 @@ namespace CardGames
         /// <summary>
         /// Check if the player is allowed to enter.
         /// </summary>
-        protected virtual bool IsAllowedToEnter(Player player, out string reason)
+        protected virtual bool IsAllowedToPlay(Player player, out string reason)
         {
             if (PlayersNumber >= MaxPlayersNumber)
             {
@@ -119,6 +151,14 @@ namespace CardGames
             }
 
             reason = string.Empty;
+            return true;
+        }
+
+        /// <summary>
+        /// Check if the player is allowed to see.
+        /// </summary>
+        protected virtual bool IsAllowedToSee(Player player)
+        {
             return true;
         }
 
@@ -160,9 +200,20 @@ namespace CardGames
             DoPlayersListChanged();
         }
 
+        private void OnViewerPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            DoViewersListChanged();
+        }
+
         private void DoPlayersListChanged()
         {
-            PlayersListText = string.Join(",", players.Select(i => i.NickName));
+            PlayersListText = string.Join(", ", players.Select(i => i.NickName));
+            DoStateChanged();
+        }
+
+        private void DoViewersListChanged()
+        {
+            ViewersListText = string.Join(", ", viewers.Select(i => i.NickName));
             DoStateChanged();
         }
 

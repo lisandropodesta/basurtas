@@ -113,7 +113,7 @@ namespace CardGames.Bazas
         /// <summary>
         /// Check if the player is allowed to enter.
         /// </summary>
-        protected override bool IsAllowedToEnter(Player player, out string reason)
+        protected override bool IsAllowedToPlay(Player player, out string reason)
         {
             if (State != BazasState.Build)
             {
@@ -121,7 +121,7 @@ namespace CardGames.Bazas
                 return false;
             }
 
-            return base.IsAllowedToEnter(player, out reason);
+            return base.IsAllowedToPlay(player, out reason);
         }
 
         /// <summary>
