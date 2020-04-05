@@ -17,5 +17,10 @@ namespace CardGames.Bazas
             Column = column;
             Player = player;
         }
+
+        public void ReplacePlayer(Player newPlayer)
+        {
+            Player = newPlayer;
+        }
     }
 }

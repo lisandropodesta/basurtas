@@ -125,6 +125,35 @@ namespace CardGames.Bazas
         }
 
         /// <summary>
+        /// Player replaced.
+        /// </summary>
+        protected override void OnPlayerReplaced(Player oldPlayer, Player newPlayer)
+        {
+            foreach (var ps in playerStatus)
+            {
+                if (ps.Player == oldPlayer)
+                {
+                    ps.ReplacePlayer(newPlayer);
+                    break;
+                }
+            }
+
+            for (var i = 0; i < PlayersNumber; i++)
+            {
+                if (HandPlayers[i] == oldPlayer)
+                {
+                    HandPlayers[i] = newPlayer;
+                    break;
+                }
+            }
+
+            if (HandWinner == oldPlayer)
+            {
+                HandWinner = newPlayer;
+            }
+        }
+
+        /// <summary>
         /// Create the list of players.
         /// </summary>
         private void CreatePlayersList()

@@ -78,7 +78,18 @@ namespace CardGames
             {
                 if (!players.Contains(player))
                 {
-                    if (IsAllowedToPlay(player, out string reason))
+                    // It could be as viewer
+                    RemovePlayer(player);
+
+                    if (started && CanPlayerReplaceMissing(player, out int index))
+                    {
+                        player.PropertyChanged += OnPlayerPropertyChanged;
+                        var oldPlayer = players[index];
+                        players[index] = player;
+                        OnPlayerReplaced(oldPlayer, player);
+                        DoPlayersListChanged();
+                    }
+                    else if (IsAllowedToPlay(player, out string reason))
                     {
                         player.PropertyChanged += OnPlayerPropertyChanged;
                         players.Add(player);
@@ -97,6 +108,29 @@ namespace CardGames
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Finds a player to replace.
+        /// </summary>
+        private bool CanPlayerReplaceMissing(Player player, out int index)
+        {
+            index = -1;
+
+            for (var i = 0; i < players.Count; i++)
+            {
+                var p = players[i];
+                if (!p.IsConnected)
+                {
+                    index = i;
+                    if (p.NickName == player.NickName)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return index >= 0;
         }
 
         /// <summary>
@@ -122,7 +156,8 @@ namespace CardGames
 
                         DoPlayersListChanged();
                     }
-                    else if (viewers.Contains(player))
+
+                    if (viewers.Contains(player))
                     {
                         player.PropertyChanged -= OnViewerPropertyChanged;
                         viewers.Remove(player);
@@ -158,6 +193,12 @@ namespace CardGames
                 return false;
             }
 
+            if (players.Any(p => p.NickName == player.NickName))
+            {
+                reason = "Ya existe un jugador con ese nombre";
+                return false;
+            }
+
             reason = string.Empty;
             return true;
         }
@@ -174,6 +215,13 @@ namespace CardGames
         /// Player leaved.
         /// </summary>
         protected virtual void OnPlayerLeaved(Player player)
+        {
+        }
+
+        /// <summary>
+        /// Player replaced.
+        /// </summary>
+        protected virtual void OnPlayerReplaced(Player oldPlayer, Player newPlayer)
         {
         }
 

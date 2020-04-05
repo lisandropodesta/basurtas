@@ -295,11 +295,7 @@
             IsCreator = true;
         }
 
-        SafeAction(() =>
-        {
-            game.OnStateChanged += OnGameStateChanged;
-            game.AddPlayer(player);
-        });
+        game.OnStateChanged += OnGameStateChanged;
     }
 
     protected override void OnComponentReady()
@@ -319,13 +315,30 @@
     public void SetNickName()
     {
         PlayerNickName = InputNickName;
+        JoinGame();
         SetCookie(CookieUserNickName, InputNickName);
     }
 
     protected void SetNickNameFromCookie(string text)
     {
         PlayerNickName = text;
+        JoinGame();
         StateHasChanged();
+    }
+
+    private void JoinGame()
+    {
+        if (!string.IsNullOrEmpty(PlayerNickName))
+        {
+            SafeAction(() =>
+            {
+                game.AddPlayer(player);
+                if (game.State != BazasState.Build)
+                {
+                    GetCards();
+                }
+            });
+        }
     }
 
     public void Start()
@@ -370,10 +383,15 @@
         switch (Game.State)
         {
             case BazasState.Bid:
-                Cards = Game.GetCards(player);
+                GetCards();
                 break;
         }
 
         InvokeAsync(() => StateHasChanged());
+    }
+
+    private void GetCards()
+    {
+        Cards = Game.GetCards(player);
     }
 }
