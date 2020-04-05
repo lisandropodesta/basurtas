@@ -196,7 +196,14 @@
                     {
                         var score = Game.GetPlayerScore(player);
                         <td style="min-width:120px; padding: 0px 5px 0px 5px; align-content:center">
-                            <h4 class="text-center">@player?.NickName</h4>
+                            @if (player.IsConnected)
+                            {
+                                <h4 class="text-center">@player?.NickName</h4>
+                            }
+                            else
+                            {
+                                <h4 class="text-center"><font color="red"><b>@player?.NickName</b></font></h4>
+                            }
                             <div class="row">
                                 <div class="col"><h5>@score.AskedAndDone</h5></div>
                                 <div class="col text-center"><h5>@score.CurrScore</h5></div>

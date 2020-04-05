@@ -111,7 +111,15 @@ namespace CardGames
                     if (players.Contains(player))
                     {
                         player.PropertyChanged -= OnPlayerPropertyChanged;
-                        players.Remove(player);
+
+                        if (!started)
+                        {
+                            players.Remove(player);
+                        }
+
+                        player.IsConnected = false;
+                        OnPlayerLeaved(player);
+
                         DoPlayersListChanged();
                     }
                     else if (viewers.Contains(player))
@@ -160,6 +168,13 @@ namespace CardGames
         protected virtual bool IsAllowedToSee(Player player)
         {
             return true;
+        }
+
+        /// <summary>
+        /// Player leaved.
+        /// </summary>
+        protected virtual void OnPlayerLeaved(Player player)
+        {
         }
 
         /// <summary>
