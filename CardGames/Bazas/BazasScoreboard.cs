@@ -38,6 +38,12 @@ namespace CardGames.Bazas
 
             started = true;
             currRound = round;
+
+            for (var playerIndex = 0; playerIndex < playersCount; playerIndex++)
+            {
+                var ps = Rounds[currRound].Player[playerIndex];
+                ps.PrevScore = (byte)(currRound > 0 ? Rounds[currRound - 1].Player[playerIndex].Score : 0);
+            }
         }
 
         /// <summary>
@@ -69,7 +75,6 @@ namespace CardGames.Bazas
             var ps = Rounds[currRound].Player[playerIndex];
             ps.Bid = quantity;
             ps.Bazas = 0;
-            ps.PrevScore = (byte)(currRound > 0 ? Rounds[currRound - 1].Player[playerIndex].Score : 0);
         }
 
         /// <summary>
