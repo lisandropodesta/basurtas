@@ -19,5 +19,10 @@ namespace CardGames
         {
             isConnected = true;
         }
+
+        public override string ToString()
+        {
+            return NickName;
+        }
     }
 }

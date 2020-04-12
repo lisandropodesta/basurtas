@@ -48,6 +48,11 @@ namespace CardGames.Bazas
         public string GameWinner { get; private set; }
 
         /// <summary>
+        /// Winner player(s).
+        /// </summary>
+        public List<Player> GameWinners { get; private set; }
+
+        /// <summary>
         /// Number of cards in current round.
         /// </summary>
         public byte CurrRoundCards { get; private set; }
@@ -68,11 +73,20 @@ namespace CardGames.Bazas
         public EnglishCard[] HandCards { get; private set; }
 
         /// <summary>
+        /// Get total round bid.
+        /// </summary>
+        public int RoundBid => GetRoundBid();
+
+        /// <summary>
         /// Last player flag.
         /// </summary>
         protected bool IsLastPlayer => handPlayerIndex == PlayersNumber - 1;
 
-        // Round index, from 0 to 13
+        /// <summary>
+        /// Current round index, from 0 to 13
+        /// </summary>
+        public byte CurrRound => currRound;
+
         private byte currRound;
 
         private byte leftHandsToPlay;
@@ -229,6 +243,14 @@ namespace CardGames.Bazas
             }
 
             return validBid;
+        }
+
+        /// <summary>
+        /// Get total round bind.
+        /// </summary>
+        public int GetRoundBid()
+        {
+            return Scoreboard.GetRoundBid();
         }
 
         /// <summary>
@@ -396,7 +418,7 @@ namespace CardGames.Bazas
         /// </summary>
         private void CalcGameWinner()
         {
-            var winner = new List<string>();
+            var winners = new List<Player>();
             var score = 0;
 
             for (var index = 0; index < PlayersNumber; index++)
@@ -405,17 +427,18 @@ namespace CardGames.Bazas
                 var finalScore = Scoreboard.Rounds[BazasConsts.RoundsNumber - 1].Player[status.Column].Score ?? 0;
                 if (score < finalScore)
                 {
-                    winner.Clear();
-                    winner.Add(status.Player.NickName);
+                    winners.Clear();
+                    winners.Add(status.Player);
                     score = finalScore;
                 }
                 else if (score == finalScore)
                 {
-                    winner.Add(status.Player.NickName);
+                    winners.Add(status.Player);
                 }
             }
 
-            GameWinner = string.Join(", ", winner);
+            GameWinners = winners;
+            GameWinner = string.Join(", ", winners);
         }
 
         /// <summary>

@@ -10,13 +10,11 @@
 
         public byte PrevScore { get; set; }
 
-        public string AskedAndDone => Bid.ToString() + (Bazas.HasValue ? "/" + Bazas : string.Empty);
-
         public string CurrScore => (Score ?? PrevScore).ToString();
 
         public override string ToString()
         {
-            return Bid.ToString() + (Bazas.HasValue ? "/" + Bazas : string.Empty) + (Score.HasValue ? "  " + Score : string.Empty);
+            return (Bazas.HasValue ? Bazas.ToString() + "/" + Bid : string.Empty) + (Score.HasValue ? "  " + Score : string.Empty);
         }
     }
 }
